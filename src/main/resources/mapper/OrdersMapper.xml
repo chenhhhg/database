@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bupt.database.mapper.OrdersMapper">
+
+    <resultMap id="BaseResultMap" type="bupt.database.entity.Orders">
+            <id property="o_ORDERKEY" column="O_ORDERKEY" jdbcType="INTEGER"/>
+            <result property="o_CUSTKEY" column="O_CUSTKEY" jdbcType="INTEGER"/>
+            <result property="o_ORDERSTATUS" column="O_ORDERSTATUS" jdbcType="CHAR"/>
+            <result property="o_TOTALPRICE" column="O_TOTALPRICE" jdbcType="DECIMAL"/>
+            <result property="o_ORDERDATE" column="O_ORDERDATE" jdbcType="DATE"/>
+            <result property="o_ORDERPRIORITY" column="O_ORDERPRIORITY" jdbcType="CHAR"/>
+            <result property="o_CLERK" column="O_CLERK" jdbcType="CHAR"/>
+            <result property="o_SHIPPRIORITY" column="O_SHIPPRIORITY" jdbcType="INTEGER"/>
+            <result property="o_COMMENT" column="O_COMMENT" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        O_ORDERKEY,O_CUSTKEY,O_ORDERSTATUS,
+        O_TOTALPRICE,O_ORDERDATE,O_ORDERPRIORITY,
+        O_CLERK,O_SHIPPRIORITY,O_COMMENT
+    </sql>
+</mapper>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bupt.database.mapper.PartsuppMapper">
+
+    <resultMap id="BaseResultMap" type="bupt.database.entity.Partsupp">
+            <id property="PS_PARTKEY" column="PS_PARTKEY" jdbcType="INTEGER"/>
+            <id property="PS_SUPPKEY" column="PS_SUPPKEY" jdbcType="INTEGER"/>
+            <result property="PS_AVAILQTY" column="PS_AVAILQTY" jdbcType="INTEGER"/>
+            <result property="PS_SUPPLYCOST" column="PS_SUPPLYCOST" jdbcType="DECIMAL"/>
+            <result property="PS_COMMENT" column="PS_COMMENT" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        PS_PARTKEY,PS_SUPPKEY,PS_AVAILQTY,
+        PS_SUPPLYCOST,PS_COMMENT
+    </sql>
+</mapper>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bupt.database.mapper.CustomerMapper">
+
+    <resultMap id="BaseResultMap" type="bupt.database.entity.Customer">
+            <id property="c_CUSTKEY" column="C_CUSTKEY" jdbcType="INTEGER"/>
+            <result property="c_NAME" column="C_NAME" jdbcType="VARCHAR"/>
+            <result property="c_ADDRESS" column="C_ADDRESS" jdbcType="VARCHAR"/>
+            <result property="c_NATIONKEY" column="C_NATIONKEY" jdbcType="INTEGER"/>
+            <result property="c_PHONE" column="C_PHONE" jdbcType="CHAR"/>
+            <result property="c_ACCTBAL" column="C_ACCTBAL" jdbcType="DECIMAL"/>
+            <result property="c_MKTSEGMENT" column="C_MKTSEGMENT" jdbcType="CHAR"/>
+            <result property="c_COMMENT" column="C_COMMENT" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        C_CUSTKEY,C_NAME,C_ADDRESS,
+        C_NATIONKEY,C_PHONE,C_ACCTBAL,
+        C_MKTSEGMENT,C_COMMENT
+    </sql>
+</mapper>

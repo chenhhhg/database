@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bupt.database.mapper.SupplierMapper">
+
+    <resultMap id="BaseResultMap" type="bupt.database.entity.Supplier">
+            <id property="s_SUPPKEY" column="S_SUPPKEY" jdbcType="INTEGER"/>
+            <result property="s_NAME" column="S_NAME" jdbcType="CHAR"/>
+            <result property="s_ADDRESS" column="S_ADDRESS" jdbcType="VARCHAR"/>
+            <result property="s_NATIONKEY" column="S_NATIONKEY" jdbcType="INTEGER"/>
+            <result property="s_PHONE" column="S_PHONE" jdbcType="CHAR"/>
+            <result property="s_ACCTBAL" column="S_ACCTBAL" jdbcType="DECIMAL"/>
+            <result property="s_COMMENT" column="S_COMMENT" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        S_SUPPKEY,S_NAME,S_ADDRESS,
+        S_NATIONKEY,S_PHONE,S_ACCTBAL,
+        S_COMMENT
+    </sql>
+</mapper>

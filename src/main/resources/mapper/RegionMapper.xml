@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bupt.database.mapper.RegionMapper">
+
+    <resultMap id="BaseResultMap" type="bupt.database.entity.Region">
+            <id property="r_REGIONKEY" column="R_REGIONKEY" jdbcType="INTEGER"/>
+            <result property="r_NAME" column="R_NAME" jdbcType="CHAR"/>
+            <result property="r_COMMENT" column="R_COMMENT" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        R_REGIONKEY,R_NAME,R_COMMENT
+    </sql>
+</mapper>
