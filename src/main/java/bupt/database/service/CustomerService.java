@@ -1,7 +1,10 @@
 package bupt.database.service;
 
+import bupt.database.dto.AuthDto;
 import bupt.database.entity.Customer;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.apache.ibatis.annotations.ResultMap;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
 * @author 86157
@@ -10,4 +13,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface CustomerService extends IService<Customer> {
 
+    Customer login(AuthDto authDto);
+
+    Customer register(AuthDto authDto);
 }

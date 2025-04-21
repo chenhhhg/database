@@ -15,6 +15,7 @@ import lombok.Data;
 @TableName(value ="orders")
 @Data
 public class Orders implements Serializable {
+    @TableId
     private Integer o_ORDERKEY;
 
     private Integer o_CUSTKEY;

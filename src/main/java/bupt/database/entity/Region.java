@@ -13,6 +13,7 @@ import lombok.Data;
 @TableName(value ="region")
 @Data
 public class Region implements Serializable {
+    @TableId
     private Integer r_REGIONKEY;
 
     private String r_NAME;

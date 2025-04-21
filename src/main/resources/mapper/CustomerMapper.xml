@@ -13,11 +13,12 @@
             <result property="c_ACCTBAL" column="C_ACCTBAL" jdbcType="DECIMAL"/>
             <result property="c_MKTSEGMENT" column="C_MKTSEGMENT" jdbcType="CHAR"/>
             <result property="c_COMMENT" column="C_COMMENT" jdbcType="VARCHAR"/>
+            <result property="c_PASSWORD" column="C_PASSWORD" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         C_CUSTKEY,C_NAME,C_ADDRESS,
         C_NATIONKEY,C_PHONE,C_ACCTBAL,
-        C_MKTSEGMENT,C_COMMENT
+        C_MKTSEGMENT,C_COMMENT,C_PASSWORD
     </sql>
 </mapper>

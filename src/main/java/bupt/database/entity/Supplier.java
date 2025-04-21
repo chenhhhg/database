@@ -14,6 +14,7 @@ import lombok.Data;
 @TableName(value ="supplier")
 @Data
 public class Supplier implements Serializable {
+    @TableId
     private Integer s_SUPPKEY;
 
     private String s_NAME;
