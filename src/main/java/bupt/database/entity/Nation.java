@@ -13,6 +13,7 @@ import lombok.Data;
 @TableName(value ="nation")
 @Data
 public class Nation implements Serializable {
+    @TableId
     private Integer n_NATIONKEY;
 
     private String n_NAME;

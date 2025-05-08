@@ -14,6 +14,7 @@ import lombok.Data;
 @TableName(value ="part")
 @Data
 public class Part implements Serializable {
+    @TableId
     private Integer p_PARTKEY;
 
     private String p_NAME;

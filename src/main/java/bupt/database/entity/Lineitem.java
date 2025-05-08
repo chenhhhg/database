@@ -15,6 +15,7 @@ import lombok.Data;
 @TableName(value ="lineitem")
 @Data
 public class Lineitem implements Serializable {
+    @TableId
     private Integer l_ORDERKEY;
 
     private Integer l_LINENUMBER;
