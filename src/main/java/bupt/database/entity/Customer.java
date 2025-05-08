@@ -14,21 +14,24 @@ import lombok.Data;
 @TableName(value ="customer")
 @Data
 public class Customer implements Serializable {
-    private Integer c_CUSTKEY;
+    @TableId("C_CUSTKEY")
+    private Integer cCustkey;
 
-    private String c_NAME;
+    private String cName;
 
-    private String c_ADDRESS;
+    private String cAddress;
 
-    private Integer c_NATIONKEY;
+    private Integer cNationkey;
 
-    private String c_PHONE;
+    private String cPhone;
 
-    private BigDecimal c_ACCTBAL;
+    private BigDecimal cAcctbal;
 
-    private String c_MKTSEGMENT;
+    private String cMktsegment;
 
-    private String c_COMMENT;
+    private String cComment;
 
-    private static final long serialVersionUID = 1L;
+    private String cPassword;
+
+    private Integer cRole;
 }
