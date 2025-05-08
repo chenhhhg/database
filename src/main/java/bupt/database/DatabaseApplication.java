@@ -8,7 +8,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 @SpringBootApplication
 @MapperScan(basePackages = "bupt.database.mapper")
-@EnableAspectJAutoProxy
 public class DatabaseApplication {
 
     public static void main(String[] args) {
