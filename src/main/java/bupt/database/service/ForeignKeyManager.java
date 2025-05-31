@@ -145,30 +145,56 @@ public class ForeignKeyManager {
         // 根据TPC-H标准外键结构构建定义
         switch (tableName.toLowerCase()) {
             case "partsupp":
-                if (constraintName.contains("FK1") || constraintName.toLowerCase().contains("supp")) {
+                if (constraintName.contains("FK1") || constraintName.toLowerCase().contains("supp") || 
+                    constraintName.toLowerCase().contains("ibfk_1")) {
                     return "CONSTRAINT " + constraintName + " FOREIGN KEY (PS_SUPPKEY) REFERENCES supplier(S_SUPPKEY)";
-                } else if (constraintName.contains("FK2") || constraintName.toLowerCase().contains("part")) {
+                } else if (constraintName.contains("FK2") || constraintName.toLowerCase().contains("part") || 
+                           constraintName.toLowerCase().contains("ibfk_2")) {
                     return "CONSTRAINT " + constraintName + " FOREIGN KEY (PS_PARTKEY) REFERENCES part(P_PARTKEY)";
                 }
                 break;
                 
             case "orders":
-                if (constraintName.contains("FK1") || constraintName.toLowerCase().contains("cust")) {
+                if (constraintName.contains("FK1") || constraintName.toLowerCase().contains("cust") || 
+                    constraintName.toLowerCase().contains("ibfk_1")) {
                     return "CONSTRAINT " + constraintName + " FOREIGN KEY (O_CUSTKEY) REFERENCES customer(C_CUSTKEY)";
                 }
                 break;
                 
             case "lineitem":
-                if (constraintName.contains("FK1") || constraintName.toLowerCase().contains("order")) {
+                if (constraintName.contains("FK1") || constraintName.toLowerCase().contains("order") || 
+                    constraintName.toLowerCase().contains("ibfk_1")) {
                     return "CONSTRAINT " + constraintName + " FOREIGN KEY (L_ORDERKEY) REFERENCES orders(O_ORDERKEY)";
-                } else if (constraintName.contains("FK2") || (constraintName.toLowerCase().contains("part") && constraintName.toLowerCase().contains("supp"))) {
+                } else if (constraintName.contains("FK2") || constraintName.toLowerCase().contains("ibfk_2") ||
+                           (constraintName.toLowerCase().contains("part") && constraintName.toLowerCase().contains("supp"))) {
                     return "CONSTRAINT " + constraintName + " FOREIGN KEY (L_PARTKEY, L_SUPPKEY) REFERENCES partsupp(PS_PARTKEY, PS_SUPPKEY)";
                 }
                 break;
         }
         
-        // 默认情况下，尝试根据引用表推断
-        log.warn("无法确定外键定义结构: {}.{} -> {}", tableName, constraintName, referencedTableName);
+        // 尝试根据表名和引用表名自动推断
+        log.info("尝试根据表名和引用表自动推断外键定义: {}.{} -> {}", tableName, constraintName, referencedTableName);
+        
+        if ("lineitem".equals(tableName)) {
+            if ("orders".equals(referencedTableName)) {
+                return "CONSTRAINT " + constraintName + " FOREIGN KEY (L_ORDERKEY) REFERENCES orders(O_ORDERKEY)";
+            } else if ("partsupp".equals(referencedTableName)) {
+                return "CONSTRAINT " + constraintName + " FOREIGN KEY (L_PARTKEY, L_SUPPKEY) REFERENCES partsupp(PS_PARTKEY, PS_SUPPKEY)";
+            }
+        } else if ("orders".equals(tableName)) {
+            if ("customer".equals(referencedTableName)) {
+                return "CONSTRAINT " + constraintName + " FOREIGN KEY (O_CUSTKEY) REFERENCES customer(C_CUSTKEY)";
+            }
+        } else if ("partsupp".equals(tableName)) {
+            if ("supplier".equals(referencedTableName)) {
+                return "CONSTRAINT " + constraintName + " FOREIGN KEY (PS_SUPPKEY) REFERENCES supplier(S_SUPPKEY)";
+            } else if ("part".equals(referencedTableName)) {
+                return "CONSTRAINT " + constraintName + " FOREIGN KEY (PS_PARTKEY) REFERENCES part(P_PARTKEY)";
+            }
+        }
+        
+        // 默认情况下，记录警告但仍尝试构建
+        log.warn("无法确定外键定义结构，使用通用格式: {}.{} -> {}", tableName, constraintName, referencedTableName);
         return "CONSTRAINT " + constraintName + " FOREIGN KEY (unknown_column) REFERENCES " + referencedTableName + "(unknown_column)";
     }
     
@@ -179,14 +205,24 @@ public class ForeignKeyManager {
     public void forceDropKnownForeignKeys() {
         log.info("开始强制删除已知的TPC-H外键约束");
         
-        // 已知的外键约束名称
+        // 已知的外键约束名称（包括标准命名和MySQL自动生成命名）
         String[][] knownForeignKeys = {
+            // 标准TPC-H命名
             {"partsupp", "PARTSUPP_FK1"},
             {"partsupp", "PARTSUPP_FK2"},
             {"orders", "ORDERS_FK1"},
             {"lineitem", "LINEITEM_FK1"},
-            {"lineitem", "LINEITEM_FK2"}
+            {"lineitem", "LINEITEM_FK2"},
+            // MySQL自动生成命名
+            {"partsupp", "partsupp_ibfk_1"},
+            {"partsupp", "partsupp_ibfk_2"},
+            {"orders", "orders_ibfk_1"},
+            {"lineitem", "lineitem_ibfk_1"},
+            {"lineitem", "lineitem_ibfk_2"}
         };
+        
+        int successCount = 0;
+        int skipCount = 0;
         
         for (String[] fk : knownForeignKeys) {
             String tableName = fk[0];
@@ -196,12 +232,14 @@ public class ForeignKeyManager {
                 String dropSQL = "ALTER TABLE " + tableName + " DROP FOREIGN KEY " + constraintName;
                 jdbcTemplate.execute(dropSQL);
                 log.info("成功删除已知外键约束: {}.{}", tableName, constraintName);
+                successCount++;
             } catch (Exception e) {
                 log.debug("删除已知外键约束失败（可能不存在）: {}.{}", tableName, constraintName);
+                skipCount++;
             }
         }
         
-        log.info("完成强制删除已知外键约束");
+        log.info("完成强制删除已知外键约束，成功: {}, 跳过: {}", successCount, skipCount);
     }
     
     /**
@@ -238,5 +276,61 @@ public class ForeignKeyManager {
         }
         
         log.info("标准外键约束创建完成，成功: {}, 失败: {}", successCount, failCount);
+    }
+    
+    /**
+     * 查询当前数据库中的外键状态
+     * @return 外键信息列表
+     */
+    public List<Map<String, Object>> getCurrentForeignKeys() {
+        try {
+            String getCurrentForeignKeysSQL = """
+                SELECT 
+                    TABLE_NAME,
+                    CONSTRAINT_NAME,
+                    COLUMN_NAME,
+                    REFERENCED_TABLE_NAME,
+                    REFERENCED_COLUMN_NAME
+                FROM information_schema.KEY_COLUMN_USAGE 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND REFERENCED_TABLE_NAME IS NOT NULL 
+                AND TABLE_NAME IN ('partsupp', 'orders', 'lineitem')
+                ORDER BY TABLE_NAME, CONSTRAINT_NAME, ORDINAL_POSITION
+                """;
+            
+            List<Map<String, Object>> foreignKeys = jdbcTemplate.queryForList(getCurrentForeignKeysSQL);
+            log.info("当前数据库中共有 {} 个外键约束", foreignKeys.size());
+            
+            for (Map<String, Object> fk : foreignKeys) {
+                log.info("外键: {}.{} ({}) -> {}.{}", 
+                    fk.get("TABLE_NAME"), 
+                    fk.get("CONSTRAINT_NAME"),
+                    fk.get("COLUMN_NAME"),
+                    fk.get("REFERENCED_TABLE_NAME"),
+                    fk.get("REFERENCED_COLUMN_NAME"));
+            }
+            
+            return foreignKeys;
+            
+        } catch (Exception e) {
+            log.error("查询外键状态失败", e);
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * 获取已保存的待恢复外键信息
+     * @return 待恢复外键数量
+     */
+    public int getSavedForeignKeysCount() {
+        return removedForeignKeys.size();
+    }
+    
+    /**
+     * 清空已保存的外键信息（慎用）
+     */
+    public void clearSavedForeignKeys() {
+        log.warn("清空已保存的外键信息，共清空 {} 个", removedForeignKeys.size());
+        removedForeignKeys.clear();
     }
 } 

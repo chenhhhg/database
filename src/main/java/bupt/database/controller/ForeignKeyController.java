@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 外键管理Controller
  * 提供外键约束管理的API接口
@@ -75,6 +78,45 @@ public class ForeignKeyController {
         } catch (Exception e) {
             log.error("创建标准外键约束失败", e);
             return R.fail("创建标准外键约束失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 查询当前数据库中的外键状态
+     */
+    @GetMapping("/status")
+    public R<Object> getForeignKeyStatus() {
+        try {
+            log.info("收到查询外键状态的请求");
+            var currentForeignKeys = foreignKeyManager.getCurrentForeignKeys();
+            int savedCount = foreignKeyManager.getSavedForeignKeysCount();
+            
+            Map<String, Object> status = new HashMap<>();
+            status.put("currentForeignKeysCount", currentForeignKeys.size());
+            status.put("currentForeignKeys", currentForeignKeys);
+            status.put("savedForeignKeysCount", savedCount);
+            status.put("canRestore", savedCount > 0);
+            
+            return R.success(status);
+        } catch (Exception e) {
+            log.error("查询外键状态失败", e);
+            return R.fail("查询外键状态失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 清空已保存的外键信息
+     */
+    @PostMapping("/clear-saved")
+    public R<String> clearSavedForeignKeys() {
+        try {
+            log.info("收到清空已保存外键信息的请求");
+            int count = foreignKeyManager.getSavedForeignKeysCount();
+            foreignKeyManager.clearSavedForeignKeys();
+            return R.success("成功清空 " + count + " 个已保存的外键信息");
+        } catch (Exception e) {
+            log.error("清空已保存外键信息失败", e);
+            return R.fail("清空已保存外键信息失败: " + e.getMessage());
         }
     }
 } 
