@@ -15,19 +15,19 @@ import lombok.Data;
 @Data
 public class Supplier implements Serializable {
     @TableId
-    private Integer s_SUPPKEY;
+    private Integer sSuppkey;
 
-    private String s_NAME;
+    private String sName;
 
-    private String s_ADDRESS;
+    private String sAddress;
 
-    private Integer s_NATIONKEY;
+    private Integer sNationkey;
 
-    private String s_PHONE;
+    private String sPhone;
 
-    private BigDecimal s_ACCTBAL;
+    private BigDecimal sAcctbal;
 
-    private String s_COMMENT;
+    private String sComment;
 
     private static final long serialVersionUID = 1L;
 }

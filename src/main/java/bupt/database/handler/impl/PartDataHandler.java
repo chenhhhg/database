@@ -1,7 +1,7 @@
 package bupt.database.handler.impl;
 
 import bupt.database.entity.Part;
-import bupt.database.handler.TableDataHandler;
+import bupt.database.handler.AbstractTableDataHandler;
 import bupt.database.mapper.PartMapper;
 import bupt.database.util.TPCTableMetadata;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class PartDataHandler implements TableDataHandler<Part> {
+public class PartDataHandler extends AbstractTableDataHandler<Part> {
     
     @Autowired
     private PartMapper partMapper;
@@ -139,23 +139,23 @@ public class PartDataHandler implements TableDataHandler<Part> {
         try {
             // p_partkey (INTEGER)
             String partkeyStr = TPCTableMetadata.cleanFieldValue(getTableName(), "p_partkey", record.get(0));
-            part.setP_PARTKEY(Integer.valueOf(partkeyStr));
+            part.setPPartkey(Integer.valueOf(partkeyStr));
             
             // p_name (VARCHAR)
             String name = TPCTableMetadata.cleanFieldValue(getTableName(), "p_name", record.get(1));
-            part.setP_NAME(name);
+            part.setPName(name);
             
             // p_mfgr (CHAR)
             String mfgr = TPCTableMetadata.cleanFieldValue(getTableName(), "p_mfgr", record.get(2));
-            part.setP_MFGR(mfgr);
+            part.setPMfgr(mfgr);
             
             // p_brand (CHAR)
             String brand = TPCTableMetadata.cleanFieldValue(getTableName(), "p_brand", record.get(3));
-            part.setP_BRAND(brand);
+            part.setPBrand(brand);
             
             // p_type (VARCHAR)
             String type = TPCTableMetadata.cleanFieldValue(getTableName(), "p_type", record.get(4));
-            part.setP_TYPE(type);
+            part.setPType(type);
             
             // p_size (INTEGER) - 特殊清洗：确保>=0
             String sizeStr = record.get(5).trim();
@@ -164,11 +164,11 @@ public class PartDataHandler implements TableDataHandler<Part> {
                 size = 0;
                 log.warn("Part尺寸字段修正为0: 原值={}", sizeStr);
             }
-            part.setP_SIZE(size);
+            part.setPSize(size);
             
             // p_container (CHAR)
             String container = TPCTableMetadata.cleanFieldValue(getTableName(), "p_container", record.get(6));
-            part.setP_CONTAINER(container);
+            part.setPContainer(container);
             
             // p_retailprice (DECIMAL) - 特殊清洗：确保>=0
             String retailpriceStr = record.get(7).trim();
@@ -177,14 +177,14 @@ public class PartDataHandler implements TableDataHandler<Part> {
                 retailprice = BigDecimal.ZERO;
                 log.warn("Part零售价格字段修正为0: 原值={}", retailpriceStr);
             }
-            part.setP_RETAILPRICE(retailprice);
+            part.setPRetailprice(retailprice);
             
             // p_comment (VARCHAR)
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "p_comment", record.get(8));
-            part.setP_COMMENT(comment);
+            part.setPComment(comment);
             
             log.debug("成功转换Part记录: partkey={}, name={}, size={}", 
-                part.getP_PARTKEY(), part.getP_NAME(), part.getP_SIZE());
+                part.getPPartkey(), part.getPName(), part.getPSize());
             return part;
             
         } catch (Exception e) {
@@ -194,7 +194,15 @@ public class PartDataHandler implements TableDataHandler<Part> {
     }
     
     @Override
-    public int batchInsert(List<Part> entities) {
+    protected void setEntityPrimaryKeyNull(Part entity) {
+        if (entity != null) {
+            entity.setPPartkey(null);
+            log.debug("设置Part主键为null: partkey=null");
+        }
+    }
+    
+    @Override
+    protected int doActualBatchInsert(List<Part> entities) {
         if (entities == null || entities.isEmpty()) {
             return 0;
         }
@@ -229,7 +237,7 @@ public class PartDataHandler implements TableDataHandler<Part> {
             } catch (Exception e) {
                 failCount++;
                 log.debug("插入单条Part记录失败: partkey={}, 错误: {}", 
-                    part.getP_PARTKEY(), e.getMessage());
+                    part.getPPartkey(), e.getMessage());
             }
         }
         

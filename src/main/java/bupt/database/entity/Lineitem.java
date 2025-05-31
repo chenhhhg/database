@@ -16,37 +16,37 @@ import lombok.Data;
 @Data
 public class Lineitem implements Serializable {
     @TableId
-    private Integer l_ORDERKEY;
+    private Integer lOrderkey;
 
-    private Integer l_LINENUMBER;
+    private Integer lLinenumber;
 
-    private Integer l_PARTKEY;
+    private Integer lPartkey;
 
-    private Integer l_SUPPKEY;
+    private Integer lSuppkey;
 
-    private BigDecimal l_QUANTITY;
+    private BigDecimal lQuantity;
 
-    private BigDecimal l_EXTENDEDPRICE;
+    private BigDecimal lExtendedprice;
 
-    private BigDecimal l_DISCOUNT;
+    private BigDecimal lDiscount;
 
-    private BigDecimal l_TAX;
+    private BigDecimal lTax;
 
-    private String l_RETURNFLAG;
+    private String lReturnflag;
 
-    private String l_LINESTATUS;
+    private String lLinestatus;
 
-    private Date l_SHIPDATE;
+    private Date lShipdate;
 
-    private Date l_COMMITDATE;
+    private Date lCommitdate;
 
-    private Date l_RECEIPTDATE;
+    private Date lReceiptdate;
 
-    private String l_SHIPINSTRUCT;
+    private String lShipinstruct;
 
-    private String l_SHIPMODE;
+    private String lShipmode;
 
-    private String l_COMMENT;
+    private String lComment;
 
     private static final long serialVersionUID = 1L;
 }

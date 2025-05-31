@@ -5,15 +5,15 @@
 <mapper namespace="bupt.database.mapper.PartMapper">
 
     <resultMap id="BaseResultMap" type="bupt.database.entity.Part">
-            <id property="p_PARTKEY" column="P_PARTKEY" jdbcType="INTEGER"/>
-            <result property="p_NAME" column="P_NAME" jdbcType="VARCHAR"/>
-            <result property="p_MFGR" column="P_MFGR" jdbcType="CHAR"/>
-            <result property="p_BRAND" column="P_BRAND" jdbcType="CHAR"/>
-            <result property="p_TYPE" column="P_TYPE" jdbcType="VARCHAR"/>
-            <result property="p_SIZE" column="P_SIZE" jdbcType="INTEGER"/>
-            <result property="p_CONTAINER" column="P_CONTAINER" jdbcType="CHAR"/>
-            <result property="p_RETAILPRICE" column="P_RETAILPRICE" jdbcType="DECIMAL"/>
-            <result property="p_COMMENT" column="P_COMMENT" jdbcType="VARCHAR"/>
+            <id property="pPartkey" column="P_PARTKEY" jdbcType="INTEGER"/>
+            <result property="pName" column="P_NAME" jdbcType="VARCHAR"/>
+            <result property="pMfgr" column="P_MFGR" jdbcType="CHAR"/>
+            <result property="pBrand" column="P_BRAND" jdbcType="CHAR"/>
+            <result property="pType" column="P_TYPE" jdbcType="VARCHAR"/>
+            <result property="pSize" column="P_SIZE" jdbcType="INTEGER"/>
+            <result property="pContainer" column="P_CONTAINER" jdbcType="CHAR"/>
+            <result property="pRetailprice" column="P_RETAILPRICE" jdbcType="DECIMAL"/>
+            <result property="pComment" column="P_COMMENT" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">

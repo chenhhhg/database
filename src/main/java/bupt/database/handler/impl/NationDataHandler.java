@@ -1,7 +1,7 @@
 package bupt.database.handler.impl;
 
 import bupt.database.entity.Nation;
-import bupt.database.handler.TableDataHandler;
+import bupt.database.handler.AbstractTableDataHandler;
 import bupt.database.mapper.NationMapper;
 import bupt.database.util.TPCTableMetadata;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class NationDataHandler implements TableDataHandler<Nation> {
+public class NationDataHandler extends AbstractTableDataHandler<Nation> {
     
     @Autowired
     private NationMapper nationMapper;
@@ -138,7 +138,7 @@ public class NationDataHandler implements TableDataHandler<Nation> {
                 nationkey = 0;
                 log.warn("Nation主键字段修正为0: 原值={}", nationkeyStr);
             }
-            nation.setN_NATIONKEY(nationkey);
+            nation.setNNationkey(nationkey);
             
             // n_name (CHAR) - 特殊清洗：不为空，长度检查
             String name = record.get(1).trim();
@@ -153,17 +153,17 @@ public class NationDataHandler implements TableDataHandler<Nation> {
                 name = name.substring(0, maxLength);
                 log.warn("Nation国家名称字段截断: 新长度={}", maxLength);
             }
-            nation.setN_NAME(name);
+            nation.setNName(name);
             
             // n_regionkey (INTEGER)
             String regionkeyStr = TPCTableMetadata.cleanFieldValue(getTableName(), "n_regionkey", record.get(2));
-            nation.setN_REGIONKEY(Integer.valueOf(regionkeyStr));
+            nation.setNRegionkey(Integer.valueOf(regionkeyStr));
             
             // n_comment (VARCHAR)
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "n_comment", record.get(3));
-            nation.setN_COMMENT(comment);
+            nation.setNComment(comment);
             
-            log.debug("成功转换Nation记录: nationkey={}, name={}", nation.getN_NATIONKEY(), nation.getN_NAME());
+            log.debug("成功转换Nation记录: nationkey={}, name={}", nation.getNNationkey(), nation.getNName());
             return nation;
             
         } catch (Exception e) {
@@ -173,7 +173,15 @@ public class NationDataHandler implements TableDataHandler<Nation> {
     }
     
     @Override
-    public int batchInsert(List<Nation> entities) {
+    protected void setEntityPrimaryKeyNull(Nation entity) {
+        if (entity != null) {
+            entity.setNNationkey(null);
+            log.debug("设置Nation主键为null: nationkey=null");
+        }
+    }
+    
+    @Override
+    protected int doActualBatchInsert(List<Nation> entities) {
         if (entities == null || entities.isEmpty()) {
             return 0;
         }
@@ -208,7 +216,7 @@ public class NationDataHandler implements TableDataHandler<Nation> {
             } catch (Exception e) {
                 failCount++;
                 log.debug("插入单条Nation记录失败: nationkey={}, 错误: {}", 
-                    nation.getN_NATIONKEY(), e.getMessage());
+                    nation.getNNationkey(), e.getMessage());
             }
         }
         

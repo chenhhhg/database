@@ -1,7 +1,7 @@
 package bupt.database.handler.impl;
 
 import bupt.database.entity.Supplier;
-import bupt.database.handler.TableDataHandler;
+import bupt.database.handler.AbstractTableDataHandler;
 import bupt.database.mapper.SupplierMapper;
 import bupt.database.util.TPCTableMetadata;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class SupplierDataHandler implements TableDataHandler<Supplier> {
+public class SupplierDataHandler extends AbstractTableDataHandler<Supplier> {
     
     @Autowired
     private SupplierMapper supplierMapper;
@@ -136,23 +136,23 @@ public class SupplierDataHandler implements TableDataHandler<Supplier> {
                 suppkey = 0;
                 log.warn("Supplier主键字段修正为0: 原值={}", suppkeyStr);
             }
-            supplier.setS_SUPPKEY(suppkey);
+            supplier.setSSuppkey(suppkey);
             
             // s_name (CHAR)
             String name = TPCTableMetadata.cleanFieldValue(getTableName(), "s_name", record.get(1));
-            supplier.setS_NAME(name);
+            supplier.setSName(name);
             
             // s_address (VARCHAR)
             String address = TPCTableMetadata.cleanFieldValue(getTableName(), "s_address", record.get(2));
-            supplier.setS_ADDRESS(address);
+            supplier.setSAddress(address);
             
             // s_nationkey (INTEGER)
             String nationkeyStr = TPCTableMetadata.cleanFieldValue(getTableName(), "s_nationkey", record.get(3));
-            supplier.setS_NATIONKEY(Integer.valueOf(nationkeyStr));
+            supplier.setSNationkey(Integer.valueOf(nationkeyStr));
             
             // s_phone (CHAR)
             String phone = TPCTableMetadata.cleanFieldValue(getTableName(), "s_phone", record.get(4));
-            supplier.setS_PHONE(phone);
+            supplier.setSPhone(phone);
             
             // s_acctbal (DECIMAL) - 特殊清洗：数值类型检查
             String acctbalStr = record.get(5).trim();
@@ -168,14 +168,14 @@ public class SupplierDataHandler implements TableDataHandler<Supplier> {
                     log.warn("Supplier账户余额字段格式无效，修正为0: 原值={}", acctbalStr);
                 }
             }
-            supplier.setS_ACCTBAL(acctbal);
+            supplier.setSAcctbal(acctbal);
             
             // s_comment (VARCHAR)
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "s_comment", record.get(6));
-            supplier.setS_COMMENT(comment);
+            supplier.setSComment(comment);
             
             log.debug("成功转换Supplier记录: suppkey={}, name={}, acctbal={}", 
-                supplier.getS_SUPPKEY(), supplier.getS_NAME(), supplier.getS_ACCTBAL());
+                supplier.getSSuppkey(), supplier.getSName(), supplier.getSAcctbal());
             return supplier;
             
         } catch (Exception e) {
@@ -185,7 +185,15 @@ public class SupplierDataHandler implements TableDataHandler<Supplier> {
     }
     
     @Override
-    public int batchInsert(List<Supplier> entities) {
+    protected void setEntityPrimaryKeyNull(Supplier entity) {
+        if (entity != null) {
+            entity.setSSuppkey(null);
+            log.debug("设置Supplier主键为null: suppkey=null");
+        }
+    }
+    
+    @Override
+    protected int doActualBatchInsert(List<Supplier> entities) {
         if (entities == null || entities.isEmpty()) {
             return 0;
         }
@@ -220,7 +228,7 @@ public class SupplierDataHandler implements TableDataHandler<Supplier> {
             } catch (Exception e) {
                 failCount++;
                 log.debug("插入单条Supplier记录失败: suppkey={}, 错误: {}", 
-                    supplier.getS_SUPPKEY(), e.getMessage());
+                    supplier.getSSuppkey(), e.getMessage());
             }
         }
         

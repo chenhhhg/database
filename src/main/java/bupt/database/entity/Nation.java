@@ -14,13 +14,13 @@ import lombok.Data;
 @Data
 public class Nation implements Serializable {
     @TableId
-    private Integer n_NATIONKEY;
+    private Integer nNationkey;
 
-    private String n_NAME;
+    private String nName;
 
-    private Integer n_REGIONKEY;
+    private Integer nRegionkey;
 
-    private String n_COMMENT;
+    private String nComment;
 
     private static final long serialVersionUID = 1L;
 }

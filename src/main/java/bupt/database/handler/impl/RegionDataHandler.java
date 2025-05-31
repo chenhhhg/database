@@ -1,7 +1,7 @@
 package bupt.database.handler.impl;
 
 import bupt.database.entity.Region;
-import bupt.database.handler.TableDataHandler;
+import bupt.database.handler.AbstractTableDataHandler;
 import bupt.database.mapper.RegionMapper;
 import bupt.database.util.TPCTableMetadata;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class RegionDataHandler implements TableDataHandler<Region> {
+public class RegionDataHandler extends AbstractTableDataHandler<Region> {
     
     @Autowired
     private RegionMapper regionMapper;
@@ -138,7 +138,7 @@ public class RegionDataHandler implements TableDataHandler<Region> {
                 regionkey = 0;
                 log.warn("Region主键字段修正为0: 原值={}", regionkeyStr);
             }
-            region.setR_REGIONKEY(regionkey);
+            region.setRRegionkey(regionkey);
             
             // r_name (CHAR) - 特殊清洗：不为空，长度检查
             String name = record.get(1).trim();
@@ -153,13 +153,13 @@ public class RegionDataHandler implements TableDataHandler<Region> {
                 name = name.substring(0, maxLength);
                 log.warn("Region区域名称字段截断: 新长度={}", maxLength);
             }
-            region.setR_NAME(name);
+            region.setRName(name);
             
             // r_comment (VARCHAR)
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "r_comment", record.get(2));
-            region.setR_COMMENT(comment);
+            region.setRComment(comment);
             
-            log.debug("成功转换Region记录: regionkey={}, name={}", region.getR_REGIONKEY(), region.getR_NAME());
+            log.debug("成功转换Region记录: regionkey={}, name={}", region.getRRegionkey(), region.getRName());
             return region;
             
         } catch (Exception e) {
@@ -169,7 +169,15 @@ public class RegionDataHandler implements TableDataHandler<Region> {
     }
     
     @Override
-    public int batchInsert(List<Region> entities) {
+    protected void setEntityPrimaryKeyNull(Region entity) {
+        if (entity != null) {
+            entity.setRRegionkey(null);
+            log.debug("设置Region主键为null: regionkey=null");
+        }
+    }
+    
+    @Override
+    protected int doActualBatchInsert(List<Region> entities) {
         if (entities == null || entities.isEmpty()) {
             return 0;
         }
@@ -204,7 +212,7 @@ public class RegionDataHandler implements TableDataHandler<Region> {
             } catch (Exception e) {
                 failCount++;
                 log.debug("插入单条Region记录失败: regionkey={}, 错误: {}", 
-                    region.getR_REGIONKEY(), e.getMessage());
+                    region.getRRegionkey(), e.getMessage());
             }
         }
         

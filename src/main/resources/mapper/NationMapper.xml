@@ -5,10 +5,10 @@
 <mapper namespace="bupt.database.mapper.NationMapper">
 
     <resultMap id="BaseResultMap" type="bupt.database.entity.Nation">
-            <id property="n_NATIONKEY" column="N_NATIONKEY" jdbcType="INTEGER"/>
-            <result property="n_NAME" column="N_NAME" jdbcType="CHAR"/>
-            <result property="n_REGIONKEY" column="N_REGIONKEY" jdbcType="INTEGER"/>
-            <result property="n_COMMENT" column="N_COMMENT" jdbcType="VARCHAR"/>
+            <id property="nNationkey" column="N_NATIONKEY" jdbcType="INTEGER"/>
+            <result property="nName" column="N_NAME" jdbcType="CHAR"/>
+            <result property="nRegionkey" column="N_REGIONKEY" jdbcType="INTEGER"/>
+            <result property="nComment" column="N_COMMENT" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">

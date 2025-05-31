@@ -1,7 +1,7 @@
 package bupt.database.handler.impl;
 
 import bupt.database.entity.Lineitem;
-import bupt.database.handler.TableDataHandler;
+import bupt.database.handler.AbstractTableDataHandler;
 import bupt.database.mapper.LineitemMapper;
 import bupt.database.util.TPCTableMetadata;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class LineItemDataHandler implements TableDataHandler<Lineitem> {
+public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
     
     @Autowired
     private LineitemMapper lineitemMapper;
@@ -146,19 +146,19 @@ public class LineItemDataHandler implements TableDataHandler<Lineitem> {
         try {
             // l_orderkey (INTEGER)
             String orderkeyStr = TPCTableMetadata.cleanFieldValue(getTableName(), "l_orderkey", record.get(0));
-            lineitem.setL_ORDERKEY(Integer.valueOf(orderkeyStr));
+            lineitem.setLOrderkey(Integer.valueOf(orderkeyStr));
             
             // l_partkey (INTEGER)
             String partkeyStr = TPCTableMetadata.cleanFieldValue(getTableName(), "l_partkey", record.get(1));
-            lineitem.setL_PARTKEY(Integer.valueOf(partkeyStr));
+            lineitem.setLPartkey(Integer.valueOf(partkeyStr));
             
             // l_suppkey (INTEGER)
             String suppkeyStr = TPCTableMetadata.cleanFieldValue(getTableName(), "l_suppkey", record.get(2));
-            lineitem.setL_SUPPKEY(Integer.valueOf(suppkeyStr));
+            lineitem.setLSuppkey(Integer.valueOf(suppkeyStr));
             
             // l_linenumber (INTEGER)
             String linenumberStr = TPCTableMetadata.cleanFieldValue(getTableName(), "l_linenumber", record.get(3));
-            lineitem.setL_LINENUMBER(Integer.valueOf(linenumberStr));
+            lineitem.setLLinenumber(Integer.valueOf(linenumberStr));
             
             // l_quantity (DECIMAL) - 特殊清洗：确保>=0
             String quantityStr = record.get(4).trim();
@@ -167,7 +167,7 @@ public class LineItemDataHandler implements TableDataHandler<Lineitem> {
                 quantity = BigDecimal.ZERO;
                 log.warn("LineItem数量字段修正为0: 原值={}", quantityStr);
             }
-            lineitem.setL_QUANTITY(quantity);
+            lineitem.setLQuantity(quantity);
             
             // l_extendedprice (DECIMAL) - 特殊清洗：确保>=0
             String extendedpriceStr = record.get(5).trim();
@@ -176,50 +176,50 @@ public class LineItemDataHandler implements TableDataHandler<Lineitem> {
                 extendedprice = BigDecimal.ZERO;
                 log.warn("LineItem扩展价格字段修正为0: 原值={}", extendedpriceStr);
             }
-            lineitem.setL_EXTENDEDPRICE(extendedprice);
+            lineitem.setLExtendedprice(extendedprice);
             
             // l_discount (DECIMAL)
             String discountStr = TPCTableMetadata.cleanFieldValue(getTableName(), "l_discount", record.get(6));
-            lineitem.setL_DISCOUNT(new BigDecimal(discountStr));
+            lineitem.setLDiscount(new BigDecimal(discountStr));
             
             // l_tax (DECIMAL)
             String taxStr = TPCTableMetadata.cleanFieldValue(getTableName(), "l_tax", record.get(7));
-            lineitem.setL_TAX(new BigDecimal(taxStr));
+            lineitem.setLTax(new BigDecimal(taxStr));
             
             // l_returnflag (CHAR)
             String returnflag = TPCTableMetadata.cleanFieldValue(getTableName(), "l_returnflag", record.get(8));
-            lineitem.setL_RETURNFLAG(returnflag);
+            lineitem.setLReturnflag(returnflag);
             
             // l_linestatus (CHAR)
             String linestatus = TPCTableMetadata.cleanFieldValue(getTableName(), "l_linestatus", record.get(9));
-            lineitem.setL_LINESTATUS(linestatus);
+            lineitem.setLLinestatus(linestatus);
             
             // l_shipdate (DATE)
             String shipdateStr = TPCTableMetadata.cleanFieldValue(getTableName(), "l_shipdate", record.get(10));
-            lineitem.setL_SHIPDATE(Date.valueOf(shipdateStr));
+            lineitem.setLShipdate(Date.valueOf(shipdateStr));
             
             // l_commitdate (DATE)
             String commitdateStr = TPCTableMetadata.cleanFieldValue(getTableName(), "l_commitdate", record.get(11));
-            lineitem.setL_COMMITDATE(Date.valueOf(commitdateStr));
+            lineitem.setLCommitdate(Date.valueOf(commitdateStr));
             
             // l_receiptdate (DATE)
             String receiptdateStr = TPCTableMetadata.cleanFieldValue(getTableName(), "l_receiptdate", record.get(12));
-            lineitem.setL_RECEIPTDATE(Date.valueOf(receiptdateStr));
+            lineitem.setLReceiptdate(Date.valueOf(receiptdateStr));
             
             // l_shipinstruct (CHAR)
             String shipinstruct = TPCTableMetadata.cleanFieldValue(getTableName(), "l_shipinstruct", record.get(13));
-            lineitem.setL_SHIPINSTRUCT(shipinstruct);
+            lineitem.setLShipinstruct(shipinstruct);
             
             // l_shipmode (CHAR)
             String shipmode = TPCTableMetadata.cleanFieldValue(getTableName(), "l_shipmode", record.get(14));
-            lineitem.setL_SHIPMODE(shipmode);
+            lineitem.setLShipmode(shipmode);
             
             // l_comment (VARCHAR)
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "l_comment", record.get(15));
-            lineitem.setL_COMMENT(comment);
+            lineitem.setLComment(comment);
             
             log.debug("成功转换LineItem记录: orderkey={}, linenumber={}, quantity={}", 
-                lineitem.getL_ORDERKEY(), lineitem.getL_LINENUMBER(), lineitem.getL_QUANTITY());
+                lineitem.getLOrderkey(), lineitem.getLLinenumber(), lineitem.getLQuantity());
             return lineitem;
             
         } catch (Exception e) {
@@ -229,7 +229,16 @@ public class LineItemDataHandler implements TableDataHandler<Lineitem> {
     }
     
     @Override
-    public int batchInsert(List<Lineitem> entities) {
+    protected void setEntityPrimaryKeyNull(Lineitem entity) {
+        if (entity != null) {
+            entity.setLOrderkey(null);
+            entity.setLLinenumber(null);
+            log.debug("设置LineItem主键为null: orderkey=null, linenumber=null");
+        }
+    }
+    
+    @Override
+    protected int doActualBatchInsert(List<Lineitem> entities) {
         if (entities == null || entities.isEmpty()) {
             return 0;
         }
@@ -264,7 +273,7 @@ public class LineItemDataHandler implements TableDataHandler<Lineitem> {
             } catch (Exception e) {
                 failCount++;
                 log.debug("插入单条LineItem记录失败: orderkey={}, linenumber={}, 错误: {}", 
-                    lineitem.getL_ORDERKEY(), lineitem.getL_LINENUMBER(), e.getMessage());
+                    lineitem.getLOrderkey(), lineitem.getLLinenumber(), e.getMessage());
             }
         }
         

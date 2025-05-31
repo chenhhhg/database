@@ -16,23 +16,23 @@ import lombok.Data;
 @Data
 public class Orders implements Serializable {
     @TableId
-    private Integer o_ORDERKEY;
+    private Integer oOrderkey;
 
-    private Integer o_CUSTKEY;
+    private Integer oCustkey;
 
-    private String o_ORDERSTATUS;
+    private String oOrderstatus;
 
-    private BigDecimal o_TOTALPRICE;
+    private BigDecimal oTotalprice;
 
-    private Date o_ORDERDATE;
+    private Date oOrderdate;
 
-    private String o_ORDERPRIORITY;
+    private String oOrderpriority;
 
-    private String o_CLERK;
+    private String oClerk;
 
-    private Integer o_SHIPPRIORITY;
+    private Integer oShippriority;
 
-    private String o_COMMENT;
+    private String oComment;
 
     private static final long serialVersionUID = 1L;
 }

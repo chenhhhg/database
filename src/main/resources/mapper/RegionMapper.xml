@@ -5,9 +5,9 @@
 <mapper namespace="bupt.database.mapper.RegionMapper">
 
     <resultMap id="BaseResultMap" type="bupt.database.entity.Region">
-            <id property="r_REGIONKEY" column="R_REGIONKEY" jdbcType="INTEGER"/>
-            <result property="r_NAME" column="R_NAME" jdbcType="CHAR"/>
-            <result property="r_COMMENT" column="R_COMMENT" jdbcType="VARCHAR"/>
+            <id property="rRegionkey" column="R_REGIONKEY" jdbcType="INTEGER"/>
+            <result property="rName" column="R_NAME" jdbcType="CHAR"/>
+            <result property="rComment" column="R_COMMENT" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">

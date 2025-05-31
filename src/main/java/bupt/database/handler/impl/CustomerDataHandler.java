@@ -1,7 +1,7 @@
 package bupt.database.handler.impl;
 
 import bupt.database.entity.Customer;
-import bupt.database.handler.TableDataHandler;
+import bupt.database.handler.AbstractTableDataHandler;
 import bupt.database.mapper.CustomerMapper;
 import bupt.database.util.TPCTableMetadata;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class CustomerDataHandler implements TableDataHandler<Customer> {
+public class CustomerDataHandler extends AbstractTableDataHandler<Customer> {
     
     @Autowired
     private CustomerMapper customerMapper;
@@ -155,7 +155,15 @@ public class CustomerDataHandler implements TableDataHandler<Customer> {
     }
     
     @Override
-    public int batchInsert(List<Customer> entities) {
+    protected void setEntityPrimaryKeyNull(Customer entity) {
+        if (entity != null) {
+            entity.setCCustkey(null);
+            log.debug("设置Customer主键为null: custkey=null");
+        }
+    }
+    
+    @Override
+    protected int doActualBatchInsert(List<Customer> entities) {
         if (entities == null || entities.isEmpty()) {
             return 0;
         }

@@ -5,13 +5,13 @@
 <mapper namespace="bupt.database.mapper.SupplierMapper">
 
     <resultMap id="BaseResultMap" type="bupt.database.entity.Supplier">
-            <id property="s_SUPPKEY" column="S_SUPPKEY" jdbcType="INTEGER"/>
-            <result property="s_NAME" column="S_NAME" jdbcType="CHAR"/>
-            <result property="s_ADDRESS" column="S_ADDRESS" jdbcType="VARCHAR"/>
-            <result property="s_NATIONKEY" column="S_NATIONKEY" jdbcType="INTEGER"/>
-            <result property="s_PHONE" column="S_PHONE" jdbcType="CHAR"/>
-            <result property="s_ACCTBAL" column="S_ACCTBAL" jdbcType="DECIMAL"/>
-            <result property="s_COMMENT" column="S_COMMENT" jdbcType="VARCHAR"/>
+            <id property="sSuppkey" column="S_SUPPKEY" jdbcType="INTEGER"/>
+            <result property="sName" column="S_NAME" jdbcType="CHAR"/>
+            <result property="sAddress" column="S_ADDRESS" jdbcType="VARCHAR"/>
+            <result property="sNationkey" column="S_NATIONKEY" jdbcType="INTEGER"/>
+            <result property="sPhone" column="S_PHONE" jdbcType="CHAR"/>
+            <result property="sAcctbal" column="S_ACCTBAL" jdbcType="DECIMAL"/>
+            <result property="sComment" column="S_COMMENT" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">

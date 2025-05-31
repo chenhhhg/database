@@ -14,11 +14,11 @@ import lombok.Data;
 @Data
 public class Region implements Serializable {
     @TableId
-    private Integer r_REGIONKEY;
+    private Integer rRegionkey;
 
-    private String r_NAME;
+    private String rName;
 
-    private String r_COMMENT;
+    private String rComment;
 
     private static final long serialVersionUID = 1L;
 }

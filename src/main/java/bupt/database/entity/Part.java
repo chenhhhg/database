@@ -15,23 +15,23 @@ import lombok.Data;
 @Data
 public class Part implements Serializable {
     @TableId
-    private Integer p_PARTKEY;
+    private Integer pPartkey;
 
-    private String p_NAME;
+    private String pName;
 
-    private String p_MFGR;
+    private String pMfgr;
 
-    private String p_BRAND;
+    private String pBrand;
 
-    private String p_TYPE;
+    private String pType;
 
-    private Integer p_SIZE;
+    private Integer pSize;
 
-    private String p_CONTAINER;
+    private String pContainer;
 
-    private BigDecimal p_RETAILPRICE;
+    private BigDecimal pRetailprice;
 
-    private String p_COMMENT;
+    private String pComment;
 
     private static final long serialVersionUID = 1L;
 }

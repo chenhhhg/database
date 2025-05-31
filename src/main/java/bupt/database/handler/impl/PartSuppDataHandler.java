@@ -1,7 +1,7 @@
 package bupt.database.handler.impl;
 
 import bupt.database.entity.Partsupp;
-import bupt.database.handler.TableDataHandler;
+import bupt.database.handler.AbstractTableDataHandler;
 import bupt.database.mapper.PartsuppMapper;
 import bupt.database.util.TPCTableMetadata;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class PartSuppDataHandler implements TableDataHandler<Partsupp> {
+public class PartSuppDataHandler extends AbstractTableDataHandler<Partsupp> {
     
     @Autowired
     private PartsuppMapper partsuppMapper;
@@ -141,11 +141,11 @@ public class PartSuppDataHandler implements TableDataHandler<Partsupp> {
         try {
             // ps_partkey (INTEGER)
             String partkeyStr = TPCTableMetadata.cleanFieldValue(getTableName(), "ps_partkey", record.get(0));
-            partsupp.setPS_PARTKEY(Integer.valueOf(partkeyStr));
+            partsupp.setPsPartkey(Integer.valueOf(partkeyStr));
             
             // ps_suppkey (INTEGER)
             String suppkeyStr = TPCTableMetadata.cleanFieldValue(getTableName(), "ps_suppkey", record.get(1));
-            partsupp.setPS_SUPPKEY(Integer.valueOf(suppkeyStr));
+            partsupp.setPsSuppkey(Integer.valueOf(suppkeyStr));
             
             // ps_availqty (INTEGER) - 特殊清洗：确保>=0
             String availqtyStr = record.get(2).trim();
@@ -154,7 +154,7 @@ public class PartSuppDataHandler implements TableDataHandler<Partsupp> {
                 availqty = 0;
                 log.warn("PartSupp零件供应数量字段修正为0: 原值={}", availqtyStr);
             }
-            partsupp.setPS_AVAILQTY(availqty);
+            partsupp.setPsAvailqty(availqty);
             
             // ps_supplycost (DECIMAL) - 特殊清洗：确保>=0
             String supplycostStr = record.get(3).trim();
@@ -163,14 +163,14 @@ public class PartSuppDataHandler implements TableDataHandler<Partsupp> {
                 supplycost = BigDecimal.ZERO;
                 log.warn("PartSupp供应成本字段修正为0: 原值={}", supplycostStr);
             }
-            partsupp.setPS_SUPPLYCOST(supplycost);
+            partsupp.setPsSupplycost(supplycost);
             
             // ps_comment (VARCHAR)
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "ps_comment", record.get(4));
-            partsupp.setPS_COMMENT(comment);
+            partsupp.setPsComment(comment);
             
             log.debug("成功转换PartSupp记录: partkey={}, suppkey={}, availqty={}", 
-                partsupp.getPS_PARTKEY(), partsupp.getPS_SUPPKEY(), partsupp.getPS_AVAILQTY());
+                partsupp.getPsPartkey(), partsupp.getPsSuppkey(), partsupp.getPsAvailqty());
             return partsupp;
             
         } catch (Exception e) {
@@ -180,7 +180,16 @@ public class PartSuppDataHandler implements TableDataHandler<Partsupp> {
     }
     
     @Override
-    public int batchInsert(List<Partsupp> entities) {
+    protected void setEntityPrimaryKeyNull(Partsupp entity) {
+        if (entity != null) {
+            entity.setPsPartkey(null);
+            entity.setPsSuppkey(null);
+            log.debug("设置PartSupp主键为null: partkey=null, suppkey=null");
+        }
+    }
+    
+    @Override
+    protected int doActualBatchInsert(List<Partsupp> entities) {
         if (entities == null || entities.isEmpty()) {
             return 0;
         }
@@ -215,7 +224,7 @@ public class PartSuppDataHandler implements TableDataHandler<Partsupp> {
             } catch (Exception e) {
                 failCount++;
                 log.debug("插入单条PartSupp记录失败: partkey={}, suppkey={}, 错误: {}", 
-                    partsupp.getPS_PARTKEY(), partsupp.getPS_SUPPKEY(), e.getMessage());
+                    partsupp.getPsPartkey(), partsupp.getPsSuppkey(), e.getMessage());
             }
         }
         

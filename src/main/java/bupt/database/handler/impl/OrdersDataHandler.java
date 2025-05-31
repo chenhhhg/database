@@ -1,7 +1,7 @@
 package bupt.database.handler.impl;
 
 import bupt.database.entity.Orders;
-import bupt.database.handler.TableDataHandler;
+import bupt.database.handler.AbstractTableDataHandler;
 import bupt.database.mapper.OrdersMapper;
 import bupt.database.util.TPCTableMetadata;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class OrdersDataHandler implements TableDataHandler<Orders> {
+public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
     
     @Autowired
     private OrdersMapper ordersMapper;
@@ -138,15 +138,15 @@ public class OrdersDataHandler implements TableDataHandler<Orders> {
         try {
             // o_orderkey (INTEGER)
             String orderkeyStr = TPCTableMetadata.cleanFieldValue(getTableName(), "o_orderkey", record.get(0));
-            order.setO_ORDERKEY(Integer.valueOf(orderkeyStr));
+            order.setOOrderkey(Integer.valueOf(orderkeyStr));
             
             // o_custkey (INTEGER)
             String custkeyStr = TPCTableMetadata.cleanFieldValue(getTableName(), "o_custkey", record.get(1));
-            order.setO_CUSTKEY(Integer.valueOf(custkeyStr));
+            order.setOCustkey(Integer.valueOf(custkeyStr));
             
             // o_orderstatus (CHAR)
             String orderstatus = TPCTableMetadata.cleanFieldValue(getTableName(), "o_orderstatus", record.get(2));
-            order.setO_ORDERSTATUS(orderstatus);
+            order.setOOrderstatus(orderstatus);
             
             // o_totalprice (DECIMAL) - 特殊清洗：确保>=0
             String totalpriceStr = record.get(3).trim();
@@ -155,7 +155,7 @@ public class OrdersDataHandler implements TableDataHandler<Orders> {
                 totalprice = BigDecimal.ZERO;
                 log.warn("Orders总价字段修正为0: 原值={}", totalpriceStr);
             }
-            order.setO_TOTALPRICE(totalprice);
+            order.setOTotalprice(totalprice);
             
             // o_orderdate (DATE) - 特殊清洗：不为空检查
             String orderdateStr = record.get(4).trim();
@@ -163,25 +163,25 @@ public class OrdersDataHandler implements TableDataHandler<Orders> {
                 orderdateStr = "1970-01-01";
                 log.warn("Orders订单日期字段为空，修正为默认日期: 1970-01-01");
             }
-            order.setO_ORDERDATE(Date.valueOf(orderdateStr));
+            order.setOOrderdate(Date.valueOf(orderdateStr));
             
             // o_orderpriority (CHAR)
             String orderpriority = TPCTableMetadata.cleanFieldValue(getTableName(), "o_orderpriority", record.get(5));
-            order.setO_ORDERPRIORITY(orderpriority);
+            order.setOOrderpriority(orderpriority);
             
             // o_clerk (CHAR)
             String clerk = TPCTableMetadata.cleanFieldValue(getTableName(), "o_clerk", record.get(6));
-            order.setO_CLERK(clerk);
+            order.setOClerk(clerk);
             
             // o_shippriority (INTEGER)
             String shippriorityStr = TPCTableMetadata.cleanFieldValue(getTableName(), "o_shippriority", record.get(7));
-            order.setO_SHIPPRIORITY(Integer.valueOf(shippriorityStr));
+            order.setOShippriority(Integer.valueOf(shippriorityStr));
             
             // o_comment (VARCHAR)
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "o_comment", record.get(8));
-            order.setO_COMMENT(comment);
+            order.setOComment(comment);
             
-            log.debug("成功转换Orders记录: orderkey={}, custkey={}", order.getO_ORDERKEY(), order.getO_CUSTKEY());
+            log.debug("成功转换Orders记录: orderkey={}, custkey={}", order.getOOrderkey(), order.getOCustkey());
             return order;
             
         } catch (Exception e) {
@@ -191,7 +191,15 @@ public class OrdersDataHandler implements TableDataHandler<Orders> {
     }
     
     @Override
-    public int batchInsert(List<Orders> entities) {
+    protected void setEntityPrimaryKeyNull(Orders entity) {
+        if (entity != null) {
+            entity.setOOrderkey(null);
+            log.debug("设置Orders主键为null: orderkey=null");
+        }
+    }
+    
+    @Override
+    protected int doActualBatchInsert(List<Orders> entities) {
         if (entities == null || entities.isEmpty()) {
             return 0;
         }
@@ -229,7 +237,7 @@ public class OrdersDataHandler implements TableDataHandler<Orders> {
             } catch (Exception e) {
                 failCount++;
                 log.debug("插入单条Orders记录失败: orderkey={}, 错误: {}", 
-                    order.getO_ORDERKEY(), e.getMessage());
+                    order.getOOrderkey(), e.getMessage());
             }
         }
         

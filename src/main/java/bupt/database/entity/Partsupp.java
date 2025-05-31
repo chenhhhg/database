@@ -15,15 +15,15 @@ import lombok.Data;
 @Data
 public class Partsupp implements Serializable {
     @TableId
-    private Integer PS_PARTKEY;
+    private Integer psPartkey;
 
-    private Integer PS_SUPPKEY;
+    private Integer psSuppkey;
 
-    private Integer PS_AVAILQTY;
+    private Integer psAvailqty;
 
-    private BigDecimal PS_SUPPLYCOST;
+    private BigDecimal psSupplycost;
 
-    private String PS_COMMENT;
+    private String psComment;
 
     private static final long serialVersionUID = 1L;
 }

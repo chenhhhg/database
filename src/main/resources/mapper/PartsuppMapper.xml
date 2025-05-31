@@ -5,11 +5,11 @@
 <mapper namespace="bupt.database.mapper.PartsuppMapper">
 
     <resultMap id="BaseResultMap" type="bupt.database.entity.Partsupp">
-            <id property="PS_PARTKEY" column="PS_PARTKEY" jdbcType="INTEGER"/>
-            <id property="PS_SUPPKEY" column="PS_SUPPKEY" jdbcType="INTEGER"/>
-            <result property="PS_AVAILQTY" column="PS_AVAILQTY" jdbcType="INTEGER"/>
-            <result property="PS_SUPPLYCOST" column="PS_SUPPLYCOST" jdbcType="DECIMAL"/>
-            <result property="PS_COMMENT" column="PS_COMMENT" jdbcType="VARCHAR"/>
+            <id property="psPartkey" column="PS_PARTKEY" jdbcType="INTEGER"/>
+            <id property="psSuppkey" column="PS_SUPPKEY" jdbcType="INTEGER"/>
+            <result property="psAvailqty" column="PS_AVAILQTY" jdbcType="INTEGER"/>
+            <result property="psSupplycost" column="PS_SUPPLYCOST" jdbcType="DECIMAL"/>
+            <result property="psComment" column="PS_COMMENT" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">

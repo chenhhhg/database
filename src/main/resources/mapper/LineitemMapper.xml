@@ -5,22 +5,22 @@
 <mapper namespace="bupt.database.mapper.LineitemMapper">
 
     <resultMap id="BaseResultMap" type="bupt.database.entity.Lineitem">
-            <id property="l_ORDERKEY" column="L_ORDERKEY" jdbcType="INTEGER"/>
-            <id property="l_LINENUMBER" column="L_LINENUMBER" jdbcType="INTEGER"/>
-            <result property="l_PARTKEY" column="L_PARTKEY" jdbcType="INTEGER"/>
-            <result property="l_SUPPKEY" column="L_SUPPKEY" jdbcType="INTEGER"/>
-            <result property="l_QUANTITY" column="L_QUANTITY" jdbcType="DECIMAL"/>
-            <result property="l_EXTENDEDPRICE" column="L_EXTENDEDPRICE" jdbcType="DECIMAL"/>
-            <result property="l_DISCOUNT" column="L_DISCOUNT" jdbcType="DECIMAL"/>
-            <result property="l_TAX" column="L_TAX" jdbcType="DECIMAL"/>
-            <result property="l_RETURNFLAG" column="L_RETURNFLAG" jdbcType="CHAR"/>
-            <result property="l_LINESTATUS" column="L_LINESTATUS" jdbcType="CHAR"/>
-            <result property="l_SHIPDATE" column="L_SHIPDATE" jdbcType="DATE"/>
-            <result property="l_COMMITDATE" column="L_COMMITDATE" jdbcType="DATE"/>
-            <result property="l_RECEIPTDATE" column="L_RECEIPTDATE" jdbcType="DATE"/>
-            <result property="l_SHIPINSTRUCT" column="L_SHIPINSTRUCT" jdbcType="CHAR"/>
-            <result property="l_SHIPMODE" column="L_SHIPMODE" jdbcType="CHAR"/>
-            <result property="l_COMMENT" column="L_COMMENT" jdbcType="VARCHAR"/>
+            <id property="lOrderkey" column="L_ORDERKEY" jdbcType="INTEGER"/>
+            <id property="lLinenumber" column="L_LINENUMBER" jdbcType="INTEGER"/>
+            <result property="lPartkey" column="L_PARTKEY" jdbcType="INTEGER"/>
+            <result property="lSuppkey" column="L_SUPPKEY" jdbcType="INTEGER"/>
+            <result property="lQuantity" column="L_QUANTITY" jdbcType="DECIMAL"/>
+            <result property="lExtendedprice" column="L_EXTENDEDPRICE" jdbcType="DECIMAL"/>
+            <result property="lDiscount" column="L_DISCOUNT" jdbcType="DECIMAL"/>
+            <result property="lTax" column="L_TAX" jdbcType="DECIMAL"/>
+            <result property="lReturnflag" column="L_RETURNFLAG" jdbcType="CHAR"/>
+            <result property="lLinestatus" column="L_LINESTATUS" jdbcType="CHAR"/>
+            <result property="lShipdate" column="L_SHIPDATE" jdbcType="DATE"/>
+            <result property="lCommitdate" column="L_COMMITDATE" jdbcType="DATE"/>
+            <result property="lReceiptdate" column="L_RECEIPTDATE" jdbcType="DATE"/>
+            <result property="lShipinstruct" column="L_SHIPINSTRUCT" jdbcType="CHAR"/>
+            <result property="lShipmode" column="L_SHIPMODE" jdbcType="CHAR"/>
+            <result property="lComment" column="L_COMMENT" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
