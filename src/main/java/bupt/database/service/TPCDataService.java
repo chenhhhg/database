@@ -3,10 +3,19 @@ package bupt.database.service;
 import bupt.database.dto.TPCDataGenerationDTO;
 import bupt.database.dto.TPCDataImportDTO;
 import bupt.database.dto.TPCPathInfoDTO;
+import bupt.database.handler.TableDataHandler;
+import bupt.database.handler.impl.CustomerDataHandler;
+import bupt.database.handler.impl.OrdersDataHandler;
+import bupt.database.handler.impl.LineItemDataHandler;
+import bupt.database.handler.impl.NationDataHandler;
+import bupt.database.handler.impl.PartDataHandler;
+import bupt.database.handler.impl.PartSuppDataHandler;
+import bupt.database.handler.impl.RegionDataHandler;
+import bupt.database.handler.impl.SupplierDataHandler;
 import bupt.database.util.R;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -20,8 +29,26 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class TPCDataService {
 
+    // 注入所有的表Handler
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private CustomerDataHandler customerDataHandler;
+    @Autowired
+    private OrdersDataHandler ordersDataHandler;
+    @Autowired
+    private LineItemDataHandler lineItemDataHandler;
+    @Autowired
+    private NationDataHandler nationDataHandler;
+    @Autowired
+    private PartDataHandler partDataHandler;
+    @Autowired
+    private PartSuppDataHandler partSuppDataHandler;
+    @Autowired
+    private RegionDataHandler regionDataHandler;
+    @Autowired
+    private SupplierDataHandler supplierDataHandler;
+
+    // 表Handler映射
+    private Map<String, TableDataHandler<?>> tableHandlers;
 
     // TPC相关路径配置
     private static final String DBGEN_PATH = "/root/tpc/TPC-H V3.0.1/dbgen";
@@ -32,6 +59,25 @@ public class TPCDataService {
     private static final List<String> TPC_TABLES = Arrays.asList(
         "customer", "orders", "lineitem", "nation", "partsupp", "part", "region", "supplier"
     );
+
+    /**
+     * 初始化表Handler映射
+     */
+    @PostConstruct
+    private void initTableHandlers() {
+        tableHandlers = new HashMap<>();
+        // 注册所有已实现的Handler
+        tableHandlers.put("customer", customerDataHandler);
+        tableHandlers.put("orders", ordersDataHandler);
+        tableHandlers.put("lineitem", lineItemDataHandler);
+        tableHandlers.put("nation", nationDataHandler);
+        tableHandlers.put("part", partDataHandler);
+        tableHandlers.put("partsupp", partSuppDataHandler);
+        tableHandlers.put("region", regionDataHandler);
+        tableHandlers.put("supplier", supplierDataHandler);
+        
+        log.info("已注册{}个表Handler: {}", tableHandlers.size(), tableHandlers.keySet());
+    }
 
     /**
      * 生成TPC数据
@@ -354,51 +400,101 @@ public class TPCDataService {
             
             // 验证必要的表文件存在
             List<String> missingFiles = new ArrayList<>();
+            List<String> availableTables = new ArrayList<>();
+            
             for (String table : TPC_TABLES) {
                 Path tblFile = sourcePath.resolve(table + ".tbl");
                 if (!Files.exists(tblFile)) {
                     missingFiles.add(table + ".tbl");
+                } else {
+                    availableTables.add(table);
                 }
+            }
+            
+            if (availableTables.isEmpty()) {
+                return R.fail("未找到任何可导入的表文件");
             }
             
             if (!missingFiles.isEmpty()) {
-                return R.fail("缺少必要的表文件: " + String.join(", ", missingFiles));
+                log.warn("缺少部分表文件: {}，将跳过这些表", String.join(", ", missingFiles));
             }
             
-            log.info("开始导入TPC数据，源路径: {}", sourceFullPath);
+            log.info("=== 开始TPC数据导入流程（Handler架构） ===");
+            log.info("源路径: {}", sourceFullPath);
+            log.info("批处理大小: {}MB", dto.getBatchSizeMB());
+            log.info("每批次最大记录数: {}", dto.getBatchRecordCount());
+            log.info("是否启用数据清洗: {}", dto.getEnableDataCleaning());
+            log.info("可导入的表: {}", availableTables);
             
-            // 创建目标路径（MySQL可访问的路径）
-            String mysqlTargetPath = MYSQL_TBL_PATH + "/" + dataPath;
-//            createSymbolicLinkIfNeeded(sourceFullPath, mysqlTargetPath);
+            // 统计信息
+            Map<String, Integer> importStats = new HashMap<>();
+            Map<String, String> errorStats = new HashMap<>();
             
-            // 执行数据导入
-            int importedTables = 0;
-            List<String> failedTables = new ArrayList<>();
+            long totalStartTime = System.currentTimeMillis();
             
-            for (String table : TPC_TABLES) {
+            // 逐个处理每个表
+            for (String table : availableTables) {
                 try {
-                    String sql = String.format(
-                        "LOAD DATA INFILE '%s/%s.tbl' INTO TABLE %s FIELDS TERMINATED BY '|'",
-                        mysqlTargetPath, table, table.toUpperCase()
-                    );
+                    log.info("开始处理表: {}", table.toUpperCase());
                     
-                    log.info("执行导入SQL: {}", sql);
-                    jdbcTemplate.execute(sql);
-                    importedTables++;
+                    // 获取对应的Handler
+                    TableDataHandler<?> handler = tableHandlers.get(table);
+                    if (handler == null) {
+                        log.warn("表 {} 没有对应的Handler实现，跳过", table);
+                        errorStats.put(table, "缺少Handler实现");
+                        continue;
+                    }
+                    
+                    Path tblFile = sourcePath.resolve(table + ".tbl");
+                    long fileSize = Files.size(tblFile);
+                    log.info("表 {} 文件大小: {} bytes", table, fileSize);
+                    
+                    // 如果需要清空现有数据
+                    if (dto.getOverwriteExisting()) {
+                        log.info("清空表 {} 的现有数据", table.toUpperCase());
+                        handler.truncateTable();
+                    }
+                    
+                    // 使用Handler处理表数据
+                    int importedCount = processTableDataWithHandler(tblFile, dto, handler);
+                    importStats.put(table, importedCount);
+                    
+                    log.info("表 {} 导入完成，导入记录数: {}", table.toUpperCase(), importedCount);
                     
                 } catch (Exception e) {
-                    log.error("导入表{}失败", table, e);
-                    failedTables.add(table + ": " + e.getMessage());
+                    log.error("处理表 {} 失败", table, e);
+                    errorStats.put(table, e.getMessage());
                 }
             }
             
-            if (failedTables.isEmpty()) {
-                log.info("TPC数据导入完成，成功导入{}个表", importedTables);
-                return R.success(String.format("数据导入成功，共导入%d个表", importedTables));
+            long totalEndTime = System.currentTimeMillis();
+            long totalTime = (totalEndTime - totalStartTime) / 1000;
+            
+            // 生成导入报告
+            StringBuilder report = new StringBuilder();
+            report.append("=== TPC数据导入完成（Handler架构） ===\n");
+            report.append(String.format("总耗时: %d秒\n", totalTime));
+            report.append("导入统计:\n");
+            
+            int totalImported = 0;
+            for (Map.Entry<String, Integer> entry : importStats.entrySet()) {
+                totalImported += entry.getValue();
+                report.append(String.format("  %s: %d条记录\n", entry.getKey().toUpperCase(), entry.getValue()));
+            }
+            
+            if (!errorStats.isEmpty()) {
+                report.append("失败的表:\n");
+                for (Map.Entry<String, String> entry : errorStats.entrySet()) {
+                    report.append(String.format("  %s: %s\n", entry.getKey().toUpperCase(), entry.getValue()));
+                }
+            }
+            
+            log.info("\n{}", report.toString());
+            
+            if (errorStats.isEmpty()) {
+                return R.success(String.format("数据导入成功，共导入%d条记录", totalImported));
             } else {
-                String message = String.format("部分数据导入失败，成功导入%d个表，失败%d个表: %s", 
-                    importedTables, failedTables.size(), String.join("; ", failedTables));
-                return R.fail(message);
+                return R.fail(String.format("部分数据导入失败，成功导入%d条记录，%d个表失败", totalImported, errorStats.size()));
             }
             
         } catch (Exception e) {
@@ -406,32 +502,121 @@ public class TPCDataService {
             return R.fail("导入数据失败: " + e.getMessage());
         }
     }
-
+    
     /**
-     * 删除TPC数据路径
+     * 使用Handler处理表数据
      */
-    public R<String> deleteTPCDataPath(String pathName) {
+    private int processTableDataWithHandler(Path tblFile, TPCDataImportDTO dto, TableDataHandler<?> handler) throws IOException {
+        log.info("开始使用Handler处理文件: {}", tblFile.getFileName());
+        
+        long maxBatchSizeBytes = (long) dto.getBatchSizeMB() * 1024 * 1024; // 转换为字节
+        int maxRecordCount = dto.getBatchRecordCount();
+        
+        int totalImported = 0;
+        int batchNumber = 1;
+        
+        try (BufferedReader reader = Files.newBufferedReader(tblFile)) {
+            List<List<String>> currentBatch = new ArrayList<>();
+            long currentBatchSize = 0;
+            String line;
+            int lineNumber = 0;
+            
+            while ((line = reader.readLine()) != null) {
+                lineNumber++;
+                
+                // 跳过空行
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                
+                // 解析TBL文件行（以|分隔）
+                List<String> record = Arrays.asList(line.split("\\|"));
+                
+                // 估算记录大小
+                long recordSize = line.getBytes().length;
+                
+                // 检查是否需要处理当前批次
+                if ((currentBatchSize + recordSize > maxBatchSizeBytes) || 
+                    (currentBatch.size() >= maxRecordCount)) {
+                    
+                    if (!currentBatch.isEmpty()) {
+                        int imported = processDataBatchWithHandler(currentBatch, batchNumber, dto.getEnableDataCleaning(), handler);
+                        totalImported += imported;
+                        batchNumber++;
+                        
+                        // 清空当前批次
+                        currentBatch.clear();
+                        currentBatchSize = 0;
+                    }
+                }
+                
+                // 添加记录到当前批次
+                currentBatch.add(record);
+                currentBatchSize += recordSize;
+                
+                // 每1000行输出一次进度
+                if (lineNumber % 1000 == 0) {
+                    log.info("已读取 {} 行，当前批次记录数: {}", lineNumber, currentBatch.size());
+                }
+            }
+            
+            // 处理最后一个批次
+            if (!currentBatch.isEmpty()) {
+                int imported = processDataBatchWithHandler(currentBatch, batchNumber, dto.getEnableDataCleaning(), handler);
+                totalImported += imported;
+            }
+            
+            log.info("文件 {} 处理完成，总共处理 {} 行，导入 {} 条记录", tblFile.getFileName(), lineNumber, totalImported);
+        }
+        
+        return totalImported;
+    }
+    
+    /**
+     * 使用Handler处理单个批次的数据
+     */
+    @SuppressWarnings("unchecked")
+    private int processDataBatchWithHandler(List<List<String>> batch, int batchNumber,
+                                            boolean enableCleaning, TableDataHandler<?> handler) {
+        log.info("使用Handler处理批次 {}，记录数: {}", batchNumber, batch.size());
+        
         try {
-            if (pathName == null || pathName.trim().isEmpty()) {
-                return R.fail("路径名称不能为空");
+            List<?> processedEntities;
+            
+            if (enableCleaning) {
+                log.debug("开始数据清洗，批次: {}", batchNumber);
+                // 使用Handler进行数据清洗和转换
+                processedEntities = handler.cleanData(batch);
+                log.info("数据清洗完成，原始记录: {}，清洗后记录: {}", batch.size(), processedEntities.size());
+            } else {
+                // 不清洗，直接转换
+                List<Object> entities = new ArrayList<>();
+                for (List<String> record : batch) {
+                    if (handler.validateRecord(record)) {
+                        Object entity = handler.convertToEntity(record);
+                        if (entity != null) {
+                            entities.add(entity);
+                        }
+                    }
+                }
+                processedEntities = entities;
+                log.info("数据转换完成，原始记录: {}，转换后记录: {}", batch.size(), processedEntities.size());
             }
             
-            String fullPath = TPC_DATA_BASE_PATH + "/" + pathName.trim();
-            Path targetPath = Paths.get(fullPath);
-            
-            if (!Files.exists(targetPath)) {
-                return R.fail("路径不存在: " + pathName);
+            if (processedEntities.isEmpty()) {
+                log.warn("批次 {} 无有效数据", batchNumber);
+                return 0;
             }
             
-            // 递归删除目录
-            deleteDirectoryRecursively(targetPath);
+            // 使用Handler进行批量插入
+            int inserted = ((TableDataHandler<Object>) handler).batchInsert((List<Object>) processedEntities);
+            log.info("批次 {} 导入完成，插入记录数: {}", batchNumber, inserted);
             
-            log.info("删除TPC数据路径: {}", fullPath);
-            return R.success("路径删除成功");
+            return inserted;
             
         } catch (Exception e) {
-            log.error("删除TPC数据路径失败", e);
-            return R.fail("删除路径失败: " + e.getMessage());
+            log.error("使用Handler处理批次 {} 失败", batchNumber, e);
+            return 0;
         }
     }
 
@@ -584,5 +769,74 @@ public class TPCDataService {
             }
         }
         Files.delete(path);
+    }
+
+    /**
+     * 删除TPC数据路径
+     */
+    public R<String> deleteTPCDataPath(String pathName) {
+        try {
+            if (pathName == null || pathName.trim().isEmpty()) {
+                return R.fail("路径名称不能为空");
+            }
+            
+            String fullPath = TPC_DATA_BASE_PATH + "/" + pathName.trim();
+            Path targetPath = Paths.get(fullPath);
+            
+            if (!Files.exists(targetPath)) {
+                return R.fail("路径不存在: " + pathName);
+            }
+            
+            // 递归删除目录
+            deleteDirectoryRecursively(targetPath);
+            
+            log.info("删除TPC数据路径: {}", fullPath);
+            return R.success("路径删除成功");
+            
+        } catch (Exception e) {
+            log.error("删除TPC数据路径失败", e);
+            return R.fail("删除路径失败: " + e.getMessage());
+        }
+    }
+
+    // 保留旧的方法作为备用，但不再使用
+    /**
+     * 分批处理TBL文件（旧方法，已弃用）
+     * @deprecated 使用processTableDataWithHandler替代
+     */
+    @Deprecated
+    private int processTblFileInBatches(String tableName, Path tblFile, TPCDataImportDTO dto) throws IOException {
+        // 保留旧实现，以防需要回退
+        return 0;
+    }
+    
+    /**
+     * 处理单个批次的数据（旧方法，已弃用）
+     * @deprecated 使用processDataBatchWithHandler替代
+     */
+    @Deprecated
+    private int processBatch(String tableName, List<List<String>> batch, int batchNumber, boolean enableCleaning) {
+        // 保留旧实现，以防需要回退
+        return 0;
+    }
+    
+    /**
+     * 批量插入数据到数据库（旧方法，已弃用）
+     * @deprecated 使用Handler的batchInsert方法替代
+     */
+    @Deprecated
+    private int batchInsertToDatabase(String tableName, List<List<String>> records) {
+        // 保留旧实现，以防需要回退
+        return 0;
+    }
+    
+    /**
+     * 逐条插入记录（旧方法，已弃用）
+     * @deprecated 使用Handler的逐条插入方法替代
+     */
+    @Deprecated
+    private int insertRecordsOneByOne(String tableName, List<List<String>> records) {
+        // 保留旧实现，以防需要回退
+        return 0;
     }
 } 
