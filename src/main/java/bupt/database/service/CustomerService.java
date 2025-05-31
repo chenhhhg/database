@@ -18,6 +18,8 @@ public interface CustomerService extends IService<Customer> {
     boolean register(AuthDTO registerDTO);
 
     boolean login(AuthDTO loginDTO);
+    
+    Customer loginAndGetUser(AuthDTO loginDTO);
 
     List<Customer> getAllUsers(Integer page, Integer size);
 
@@ -30,4 +32,6 @@ public interface CustomerService extends IService<Customer> {
     DatabaseConfig getDbConfig();
 
     void updateDbConfig(DatabaseConfig config);
+
+    Long getUserCnt();
 }
