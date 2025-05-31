@@ -24,7 +24,7 @@ public class TPCDataService {
     private JdbcTemplate jdbcTemplate;
 
     // TPC相关路径配置
-    private static final String DBGEN_PATH = "/root/mysql/tpc/TPC-H V3.0.1/dbgen";
+    private static final String DBGEN_PATH = "/root/tpc/TPC-H V3.0.1/dbgen";
     private static final String TPC_DATA_BASE_PATH = "/root/mysql/tpc/TPC-H V3.0.1/dbgen/tbl";
     private static final String MYSQL_TBL_PATH = "/var/lib/mysql/tpc/TPC-H V3.0.1/dbgen/tbl";
     
@@ -442,8 +442,14 @@ public class TPCDataService {
         Path source = Paths.get(DBGEN_PATH);
         Path target = Paths.get(targetPath);
         
-        log.info("源目录: {}", source.toAbsolutePath());
-        log.info("目标目录: {}", target.toAbsolutePath());
+        log.info("从dbgen目录移动文件: {}", source.toAbsolutePath());
+        log.info("到TPC数据目录: {}", target.toAbsolutePath());
+        
+        // 确保目标目录存在
+        if (!Files.exists(target)) {
+            log.info("目标目录不存在，正在创建: {}", target.toAbsolutePath());
+            Files.createDirectories(target);
+        }
         
         int movedCount = 0;
         int skippedCount = 0;
@@ -454,8 +460,8 @@ public class TPCDataService {
             Path targetFile = target.resolve(fileName);
             
             log.info("处理表文件: {}", fileName);
-            log.info("  源文件路径: {}", sourceFile.toAbsolutePath());
-            log.info("  目标文件路径: {}", targetFile.toAbsolutePath());
+            log.info("  从dbgen目录: {}", sourceFile.toAbsolutePath());
+            log.info("  到TPC目录: {}", targetFile.toAbsolutePath());
             
             if (Files.exists(sourceFile)) {
                 try {
@@ -492,6 +498,7 @@ public class TPCDataService {
         log.info("成功移动: {} 个文件", movedCount);
         log.info("跳过文件: {} 个文件", skippedCount);
         log.info("预期文件数: {} 个文件", TPC_TABLES.size());
+        log.info("最终TPC数据目录: {}", target.toAbsolutePath());
         
         if (movedCount == 0) {
             throw new IOException("没有任何文件被移动，可能dbgen没有生成预期的文件");
