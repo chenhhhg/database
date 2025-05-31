@@ -25,7 +25,7 @@ public class TPCDataService {
 
     // TPC相关路径配置
     private static final String DBGEN_PATH = "/root/mysql/tpc/TPC-H V3.0.1/dbgen";
-    private static final String TPC_DATA_BASE_PATH = "/root/mysql/tpc/TPC-H V3.0.1/dbgen/tpc";
+    private static final String TPC_DATA_BASE_PATH = "/root/mysql/tpc/TPC-H V3.0.1/dbgen/tbl";
     private static final String MYSQL_TBL_PATH = "/var/lib/mysql/tpc/TPC-H V3.0.1/dbgen/tbl";
     
     // TPC-H表名列表
@@ -126,7 +126,8 @@ public class TPCDataService {
                 Files.createDirectories(baseDir);
                 return R.success(paths);
             }
-            
+
+            log.info("即将开始检查路径下导入数据");
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(baseDir, Files::isDirectory)) {
                 for (Path path : stream) {
                     log.info("正在检查文件：{}",path.getFileName());
