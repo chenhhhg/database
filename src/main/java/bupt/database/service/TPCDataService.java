@@ -40,6 +40,10 @@ public class TPCDataService {
         log.info("=== 开始TPC数据生成流程 ===");
         log.info("接收到的请求参数: {}", dto);
         
+        Path targetPath = null;
+        String sanitizedPath = null;
+        boolean shouldCleanup = false;
+        
         try {
             // 验证参数
             log.info("步骤1: 开始验证输入参数");
@@ -57,7 +61,7 @@ public class TPCDataService {
             
             // 清理路径名称，确保安全
             log.info("步骤2: 开始路径名称清理和验证");
-            String sanitizedPath = dto.getTargetPath().replaceAll("[^a-zA-Z0-9_-]", "");
+            sanitizedPath = dto.getTargetPath().replaceAll("[^a-zA-Z0-9_-]", "");
             log.info("路径清理后: '{}' -> '{}'", dto.getTargetPath(), sanitizedPath);
             if (sanitizedPath.isEmpty()) {
                 log.error("路径清理失败: 清理后路径为空");
@@ -69,7 +73,7 @@ public class TPCDataService {
             
             // 检查目标路径是否已存在
             log.info("步骤3: 检查目标路径是否存在");
-            Path targetPath = Paths.get(targetFullPath);
+            targetPath = Paths.get(targetFullPath);
             log.info("检查路径: {}", targetPath.toAbsolutePath());
             if (Files.exists(targetPath)) {
                 log.error("目标路径已存在: {}", targetPath.toAbsolutePath());
@@ -81,6 +85,7 @@ public class TPCDataService {
             log.info("步骤4: 创建目标目录");
             try {
                 Files.createDirectories(targetPath);
+                shouldCleanup = true; // 目录创建成功后，如果后续失败需要清理
                 log.info("目标目录创建成功: {}", targetPath.toAbsolutePath());
             } catch (IOException e) {
                 log.error("创建目标目录失败: {}", e.getMessage(), e);
@@ -107,10 +112,12 @@ public class TPCDataService {
             log.info("检查dbgen可执行文件路径: {}", dbgenExecutable.toAbsolutePath());
             if (!Files.exists(dbgenExecutable)) {
                 log.error("dbgen可执行文件不存在: {}", dbgenExecutable.toAbsolutePath());
+                cleanupOnFailure(targetPath, sanitizedPath);
                 return R.fail("dbgen可执行文件不存在，请检查路径: " + dbgenExecutable.toAbsolutePath());
             }
             if (!Files.isExecutable(dbgenExecutable)) {
                 log.error("dbgen文件存在但不可执行: {}", dbgenExecutable.toAbsolutePath());
+                cleanupOnFailure(targetPath, sanitizedPath);
                 return R.fail("dbgen文件不可执行，请检查权限: " + dbgenExecutable.toAbsolutePath());
             }
             log.info("dbgen可执行文件检查通过");
@@ -131,6 +138,7 @@ public class TPCDataService {
                 log.info("进程启动成功，PID可能为: {}", process.pid());
             } catch (IOException e) {
                 log.error("启动进程失败: {}", e.getMessage(), e);
+                cleanupOnFailure(targetPath, sanitizedPath);
                 return R.fail("启动dbgen进程失败: " + e.getMessage());
             }
             
@@ -169,12 +177,14 @@ public class TPCDataService {
             } catch (InterruptedException e) {
                 log.error("等待进程时被中断: {}", e.getMessage(), e);
                 process.destroyForcibly();
+                cleanupOnFailure(targetPath, sanitizedPath);
                 return R.fail("等待进程时被中断: " + e.getMessage());
             }
             
             if (!finished) {
                 log.error("进程执行超时（30分钟），强制终止进程");
                 process.destroyForcibly();
+                cleanupOnFailure(targetPath, sanitizedPath);
                 return R.fail("数据生成超时（30分钟）");
             }
             
@@ -183,6 +193,7 @@ public class TPCDataService {
             if (exitCode != 0) {
                 log.error("dbgen执行失败，退出码: {}", exitCode);
                 log.error("完整输出内容:\n{}", output.toString());
+                cleanupOnFailure(targetPath, sanitizedPath);
                 return R.fail("数据生成失败，退出码: " + exitCode + "\n输出: " + output.toString());
             }
             
@@ -204,6 +215,7 @@ public class TPCDataService {
             
             if (generatedFiles.isEmpty()) {
                 log.error("未发现任何生成的.tbl文件");
+                cleanupOnFailure(targetPath, sanitizedPath);
                 return R.fail("数据生成完成但未发现.tbl文件");
             }
             
@@ -216,6 +228,7 @@ public class TPCDataService {
                 log.info("文件移动完成");
             } catch (IOException e) {
                 log.error("移动文件失败: {}", e.getMessage(), e);
+                cleanupOnFailure(targetPath, sanitizedPath);
                 return R.fail("移动生成文件失败: " + e.getMessage());
             }
             
@@ -242,13 +255,46 @@ public class TPCDataService {
             log.info("=== TPC数据生成流程完成 ===");
             log.info("总耗时: {}秒, 生成路径: {}", totalElapsed / 1000, sanitizedPath);
             
+            // 成功完成，不需要清理
+            shouldCleanup = false;
             return R.success("数据生成成功，路径: " + sanitizedPath);
             
         } catch (Exception e) {
             log.error("=== TPC数据生成流程异常终止 ===", e);
             log.error("异常类型: {}", e.getClass().getSimpleName());
             log.error("异常消息: {}", e.getMessage());
+            
+            // 发生异常时清理
+            if (shouldCleanup && targetPath != null) {
+                cleanupOnFailure(targetPath, sanitizedPath);
+            }
+            
             return R.fail("生成数据失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 生成失败时的清理逻辑
+     */
+    private void cleanupOnFailure(Path targetPath, String pathName) {
+        if (targetPath == null) {
+            return;
+        }
+        
+        try {
+            log.info("=== 开始清理失败的目标目录 ===");
+            log.info("清理目录: {}", targetPath.toAbsolutePath());
+            
+            if (Files.exists(targetPath)) {
+                deleteDirectoryRecursively(targetPath);
+                log.info("目标目录清理完成: {}", pathName);
+            } else {
+                log.info("目标目录不存在，无需清理: {}", targetPath.toAbsolutePath());
+            }
+            
+        } catch (Exception e) {
+            log.error("清理目标目录失败: {}", e.getMessage(), e);
+            log.error("请手动删除目录: {}", targetPath.toAbsolutePath());
         }
     }
 
@@ -323,7 +369,7 @@ public class TPCDataService {
             
             // 创建目标路径（MySQL可访问的路径）
             String mysqlTargetPath = MYSQL_TBL_PATH + "/" + dataPath;
-            createSymbolicLinkIfNeeded(sourceFullPath, mysqlTargetPath);
+//            createSymbolicLinkIfNeeded(sourceFullPath, mysqlTargetPath);
             
             // 执行数据导入
             int importedTables = 0;
