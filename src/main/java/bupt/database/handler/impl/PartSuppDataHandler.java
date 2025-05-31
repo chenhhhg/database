@@ -180,15 +180,6 @@ public class PartSuppDataHandler extends AbstractTableDataHandler<Partsupp> {
     }
     
     @Override
-    protected void setEntityPrimaryKeyNull(Partsupp entity) {
-        if (entity != null) {
-            entity.setPsPartkey(null);
-            entity.setPsSuppkey(null);
-            log.debug("设置PartSupp主键为null: partkey=null, suppkey=null");
-        }
-    }
-    
-    @Override
     protected int doActualBatchInsert(List<Partsupp> entities) {
         if (entities == null || entities.isEmpty()) {
             return 0;
@@ -241,6 +232,40 @@ public class PartSuppDataHandler extends AbstractTableDataHandler<Partsupp> {
         } catch (Exception e) {
             log.error("清空PartSupp表失败", e);
             throw new RuntimeException("清空PartSupp表失败", e);
+        }
+    }
+    
+    @Override
+    protected Long getMaxPrimaryKey() {
+        try {
+            // 对于PartSupp复合主键，我们获取最大的partkey值
+            Partsupp maxPartsupp = partsuppMapper.selectOne(
+                new QueryWrapper<Partsupp>()
+                    .select("MAX(ps_partkey) as ps_partkey")
+                    .last("LIMIT 1")
+            );
+            
+            if (maxPartsupp != null && maxPartsupp.getPsPartkey() != null) {
+                Long maxKey = maxPartsupp.getPsPartkey().longValue();
+                log.debug("PartSupp表最大partkey值: {}", maxKey);
+                return maxKey;
+            } else {
+                log.debug("PartSupp表为空，返回主键值: 0");
+                return 0L;
+            }
+        } catch (Exception e) {
+            log.warn("获取PartSupp表最大主键失败，返回默认值0", e);
+            return 0L;
+        }
+    }
+    
+    @Override
+    protected void setEntityPrimaryKey(Partsupp entity, Long primaryKeyValue) {
+        if (entity != null) {
+            // 对于复合主键，我们设置partkey为传入值，suppkey为1（固定值）
+            entity.setPsPartkey(primaryKeyValue.intValue());
+            entity.setPsSuppkey(1);
+            log.debug("设置PartSupp主键: partkey={}, suppkey=1", primaryKeyValue);
         }
     }
 } 

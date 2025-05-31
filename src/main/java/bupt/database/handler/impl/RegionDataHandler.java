@@ -169,10 +169,34 @@ public class RegionDataHandler extends AbstractTableDataHandler<Region> {
     }
     
     @Override
-    protected void setEntityPrimaryKeyNull(Region entity) {
+    protected Long getMaxPrimaryKey() {
+        try {
+            // 查询Region表中最大的regionkey值
+            Region maxRegion = regionMapper.selectOne(
+                new QueryWrapper<Region>()
+                    .select("MAX(r_regionkey) as r_regionkey")
+                    .last("LIMIT 1")
+            );
+            
+            if (maxRegion != null && maxRegion.getRRegionkey() != null) {
+                Long maxKey = maxRegion.getRRegionkey().longValue();
+                log.debug("Region表最大主键值: {}", maxKey);
+                return maxKey;
+            } else {
+                log.debug("Region表为空，返回主键值: 0");
+                return 0L;
+            }
+        } catch (Exception e) {
+            log.warn("获取Region表最大主键失败，返回默认值0", e);
+            return 0L;
+        }
+    }
+    
+    @Override
+    protected void setEntityPrimaryKey(Region entity, Long primaryKeyValue) {
         if (entity != null) {
-            entity.setRRegionkey(null);
-            log.debug("设置Region主键为null: regionkey=null");
+            entity.setRRegionkey(primaryKeyValue.intValue());
+            log.debug("设置Region主键: regionkey={}", primaryKeyValue);
         }
     }
     

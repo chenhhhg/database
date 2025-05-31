@@ -229,15 +229,6 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
     }
     
     @Override
-    protected void setEntityPrimaryKeyNull(Lineitem entity) {
-        if (entity != null) {
-            entity.setLOrderkey(null);
-            entity.setLLinenumber(null);
-            log.debug("设置LineItem主键为null: orderkey=null, linenumber=null");
-        }
-    }
-    
-    @Override
     protected int doActualBatchInsert(List<Lineitem> entities) {
         if (entities == null || entities.isEmpty()) {
             return 0;
@@ -290,6 +281,40 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
         } catch (Exception e) {
             log.error("清空LineItem表失败", e);
             throw new RuntimeException("清空LineItem表失败", e);
+        }
+    }
+    
+    @Override
+    protected Long getMaxPrimaryKey() {
+        try {
+            // 对于LineItem复合主键，我们获取最大的orderkey值
+            Lineitem maxLineitem = lineitemMapper.selectOne(
+                new QueryWrapper<Lineitem>()
+                    .select("MAX(l_orderkey) as l_orderkey")
+                    .last("LIMIT 1")
+            );
+            
+            if (maxLineitem != null && maxLineitem.getLOrderkey() != null) {
+                Long maxKey = maxLineitem.getLOrderkey().longValue();
+                log.debug("LineItem表最大orderkey值: {}", maxKey);
+                return maxKey;
+            } else {
+                log.debug("LineItem表为空，返回主键值: 0");
+                return 0L;
+            }
+        } catch (Exception e) {
+            log.warn("获取LineItem表最大主键失败，返回默认值0", e);
+            return 0L;
+        }
+    }
+    
+    @Override
+    protected void setEntityPrimaryKey(Lineitem entity, Long primaryKeyValue) {
+        if (entity != null) {
+            // 对于复合主键，我们设置orderkey为传入值，linenumber为1（表示该订单的第一行）
+            entity.setLOrderkey(primaryKeyValue.intValue());
+            entity.setLLinenumber(1);
+            log.debug("设置LineItem主键: orderkey={}, linenumber=1", primaryKeyValue);
         }
     }
 } 

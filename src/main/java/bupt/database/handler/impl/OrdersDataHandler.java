@@ -191,10 +191,34 @@ public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
     }
     
     @Override
-    protected void setEntityPrimaryKeyNull(Orders entity) {
+    protected Long getMaxPrimaryKey() {
+        try {
+            // 查询Orders表中最大的orderkey值
+            Orders maxOrder = ordersMapper.selectOne(
+                new QueryWrapper<Orders>()
+                    .select("MAX(o_orderkey) as o_orderkey")
+                    .last("LIMIT 1")
+            );
+            
+            if (maxOrder != null && maxOrder.getOOrderkey() != null) {
+                Long maxKey = maxOrder.getOOrderkey().longValue();
+                log.debug("Orders表最大主键值: {}", maxKey);
+                return maxKey;
+            } else {
+                log.debug("Orders表为空，返回主键值: 0");
+                return 0L;
+            }
+        } catch (Exception e) {
+            log.warn("获取Orders表最大主键失败，返回默认值0", e);
+            return 0L;
+        }
+    }
+    
+    @Override
+    protected void setEntityPrimaryKey(Orders entity, Long primaryKeyValue) {
         if (entity != null) {
-            entity.setOOrderkey(null);
-            log.debug("设置Orders主键为null: orderkey=null");
+            entity.setOOrderkey(primaryKeyValue.intValue());
+            log.debug("设置Orders主键: orderkey={}", primaryKeyValue);
         }
     }
     

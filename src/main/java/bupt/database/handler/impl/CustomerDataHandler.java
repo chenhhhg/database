@@ -155,10 +155,34 @@ public class CustomerDataHandler extends AbstractTableDataHandler<Customer> {
     }
     
     @Override
-    protected void setEntityPrimaryKeyNull(Customer entity) {
+    protected Long getMaxPrimaryKey() {
+        try {
+            // 查询Customer表中最大的custkey值
+            Customer maxCustomer = customerMapper.selectOne(
+                new QueryWrapper<Customer>()
+                    .select("MAX(c_custkey) as c_custkey")
+                    .last("LIMIT 1")
+            );
+            
+            if (maxCustomer != null && maxCustomer.getCCustkey() != null) {
+                Long maxKey = maxCustomer.getCCustkey().longValue();
+                log.debug("Customer表最大主键值: {}", maxKey);
+                return maxKey;
+            } else {
+                log.debug("Customer表为空，返回主键值: 0");
+                return 0L;
+            }
+        } catch (Exception e) {
+            log.warn("获取Customer表最大主键失败，返回默认值0", e);
+            return 0L;
+        }
+    }
+    
+    @Override
+    protected void setEntityPrimaryKey(Customer entity, Long primaryKeyValue) {
         if (entity != null) {
-            entity.setCCustkey(null);
-            log.debug("设置Customer主键为null: custkey=null");
+            entity.setCCustkey(primaryKeyValue.intValue());
+            log.debug("设置Customer主键: custkey={}", primaryKeyValue);
         }
     }
     

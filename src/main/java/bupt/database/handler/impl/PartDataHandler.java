@@ -194,10 +194,34 @@ public class PartDataHandler extends AbstractTableDataHandler<Part> {
     }
     
     @Override
-    protected void setEntityPrimaryKeyNull(Part entity) {
+    protected Long getMaxPrimaryKey() {
+        try {
+            // 查询Part表中最大的partkey值
+            Part maxPart = partMapper.selectOne(
+                new QueryWrapper<Part>()
+                    .select("MAX(p_partkey) as p_partkey")
+                    .last("LIMIT 1")
+            );
+            
+            if (maxPart != null && maxPart.getPPartkey() != null) {
+                Long maxKey = maxPart.getPPartkey().longValue();
+                log.debug("Part表最大主键值: {}", maxKey);
+                return maxKey;
+            } else {
+                log.debug("Part表为空，返回主键值: 0");
+                return 0L;
+            }
+        } catch (Exception e) {
+            log.warn("获取Part表最大主键失败，返回默认值0", e);
+            return 0L;
+        }
+    }
+    
+    @Override
+    protected void setEntityPrimaryKey(Part entity, Long primaryKeyValue) {
         if (entity != null) {
-            entity.setPPartkey(null);
-            log.debug("设置Part主键为null: partkey=null");
+            entity.setPPartkey(primaryKeyValue.intValue());
+            log.debug("设置Part主键: partkey={}", primaryKeyValue);
         }
     }
     

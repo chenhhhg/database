@@ -185,10 +185,34 @@ public class SupplierDataHandler extends AbstractTableDataHandler<Supplier> {
     }
     
     @Override
-    protected void setEntityPrimaryKeyNull(Supplier entity) {
+    protected Long getMaxPrimaryKey() {
+        try {
+            // 查询Supplier表中最大的suppkey值
+            Supplier maxSupplier = supplierMapper.selectOne(
+                new QueryWrapper<Supplier>()
+                    .select("MAX(s_suppkey) as s_suppkey")
+                    .last("LIMIT 1")
+            );
+            
+            if (maxSupplier != null && maxSupplier.getSSuppkey() != null) {
+                Long maxKey = maxSupplier.getSSuppkey().longValue();
+                log.debug("Supplier表最大主键值: {}", maxKey);
+                return maxKey;
+            } else {
+                log.debug("Supplier表为空，返回主键值: 0");
+                return 0L;
+            }
+        } catch (Exception e) {
+            log.warn("获取Supplier表最大主键失败，返回默认值0", e);
+            return 0L;
+        }
+    }
+    
+    @Override
+    protected void setEntityPrimaryKey(Supplier entity, Long primaryKeyValue) {
         if (entity != null) {
-            entity.setSSuppkey(null);
-            log.debug("设置Supplier主键为null: suppkey=null");
+            entity.setSSuppkey(primaryKeyValue.intValue());
+            log.debug("设置Supplier主键: suppkey={}", primaryKeyValue);
         }
     }
     

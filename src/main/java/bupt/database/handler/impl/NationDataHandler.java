@@ -173,10 +173,34 @@ public class NationDataHandler extends AbstractTableDataHandler<Nation> {
     }
     
     @Override
-    protected void setEntityPrimaryKeyNull(Nation entity) {
+    protected Long getMaxPrimaryKey() {
+        try {
+            // 查询Nation表中最大的nationkey值
+            Nation maxNation = nationMapper.selectOne(
+                new QueryWrapper<Nation>()
+                    .select("MAX(n_nationkey) as n_nationkey")
+                    .last("LIMIT 1")
+            );
+            
+            if (maxNation != null && maxNation.getNNationkey() != null) {
+                Long maxKey = maxNation.getNNationkey().longValue();
+                log.debug("Nation表最大主键值: {}", maxKey);
+                return maxKey;
+            } else {
+                log.debug("Nation表为空，返回主键值: 0");
+                return 0L;
+            }
+        } catch (Exception e) {
+            log.warn("获取Nation表最大主键失败，返回默认值0", e);
+            return 0L;
+        }
+    }
+    
+    @Override
+    protected void setEntityPrimaryKey(Nation entity, Long primaryKeyValue) {
         if (entity != null) {
-            entity.setNNationkey(null);
-            log.debug("设置Nation主键为null: nationkey=null");
+            entity.setNNationkey(primaryKeyValue.intValue());
+            log.debug("设置Nation主键: nationkey={}", primaryKeyValue);
         }
     }
     
