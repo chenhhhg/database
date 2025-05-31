@@ -122,12 +122,14 @@ public class TPCDataService {
             Path baseDir = Paths.get(TPC_DATA_BASE_PATH);
             
             if (!Files.exists(baseDir)) {
+                log.info("正在创建存放TBL数据的目录");
                 Files.createDirectories(baseDir);
                 return R.success(paths);
             }
             
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(baseDir, Files::isDirectory)) {
                 for (Path path : stream) {
+                    log.info("正在检查文件：{}",path.getFileName());
                     TPCPathInfoDTO pathInfo = createPathInfo(path);
                     if (pathInfo != null) {
                         paths.add(pathInfo);
@@ -293,6 +295,7 @@ public class TPCDataService {
             // 检查是否包含所有必要的表文件
             for (String table : TPC_TABLES) {
                 if (!tableFiles.contains(table + ".tbl")) {
+                    log.info("路径 {} 不包含表 {}, 不可导入！",path.getFileName(), table);
                     importable = false;
                     break;
                 }
@@ -301,7 +304,7 @@ public class TPCDataService {
             info.setDataSize(totalSize);
             info.setTableFiles(tableFiles);
             info.setImportable(importable);
-            
+            log.info("路径 {} 的导入配置为 {}",path.getFileName(), info);
             return info;
             
         } catch (Exception e) {
