@@ -94,7 +94,7 @@ public class TPCDataService {
             List<String> command = new ArrayList<>();
             command.add("bash");
             command.add("-c");
-            String dbgenCommand = String.format("cd %s && ./dbgen -s %f", DBGEN_PATH, dto.getSizeInGB());
+            String dbgenCommand = String.format("cd \"%s\" && ./dbgen -s %f", DBGEN_PATH, dto.getSizeInGB());
             command.add(dbgenCommand);
             
             log.info("构建的完整命令: {}", command);
