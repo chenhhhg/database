@@ -69,7 +69,7 @@ public class CustomerDataHandler extends AbstractTableDataHandler<Customer> {
                 }
             } else {
                 invalidCount++;
-                log.debug("无效的Customer记录被过滤: {}", record);
+                log.info("无效的Customer记录被过滤: {}", record);
             }
         }
         
@@ -82,7 +82,7 @@ public class CustomerDataHandler extends AbstractTableDataHandler<Customer> {
         List<String> fieldNames = getFieldNames();
         
         if (record == null || record.size() != fieldNames.size()) {
-            log.debug("Customer记录字段数量不匹配，期望: {}, 实际: {}", 
+            log.info("Customer记录字段数量不匹配，期望: {}, 实际: {}", 
                 fieldNames.size(), record != null ? record.size() : 0);
             return false;
         }
@@ -90,13 +90,13 @@ public class CustomerDataHandler extends AbstractTableDataHandler<Customer> {
         // 验证主键字段（c_custkey）不能为空
         String custkey = record.get(0); // c_custkey是第一个字段
         if (custkey == null || custkey.trim().isEmpty()) {
-            log.debug("Customer主键c_custkey为空");
+            log.info("Customer主键c_custkey为空");
             return false;
         }
         
         // 验证主键是否为有效整数
         if (!TPCTableMetadata.isValidFieldValue(getTableName(), "c_custkey", custkey)) {
-            log.debug("Customer主键c_custkey格式无效: {}", custkey);
+            log.info("Customer主键c_custkey格式无效: {}", custkey);
             return false;
         }
         
@@ -145,7 +145,7 @@ public class CustomerDataHandler extends AbstractTableDataHandler<Customer> {
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "c_comment", record.get(7));
             customer.setCComment(comment);
             
-            log.debug("成功转换Customer记录: custkey={}, name={}", customer.getCCustkey(), customer.getCName());
+            log.info("成功转换Customer记录: custkey={}, name={}", customer.getCCustkey(), customer.getCName());
             return customer;
             
         } catch (Exception e) {
@@ -166,10 +166,10 @@ public class CustomerDataHandler extends AbstractTableDataHandler<Customer> {
             
             if (maxCustomer != null && maxCustomer.getCCustkey() != null) {
                 Long maxKey = maxCustomer.getCCustkey().longValue();
-                log.debug("Customer表最大主键值: {}", maxKey);
+                log.info("Customer表最大主键值: {}", maxKey);
                 return maxKey;
             } else {
-                log.debug("Customer表为空，返回主键值: 0");
+                log.info("Customer表为空，返回主键值: 0");
                 return 0L;
             }
         } catch (Exception e) {
@@ -182,7 +182,7 @@ public class CustomerDataHandler extends AbstractTableDataHandler<Customer> {
     protected void setEntityPrimaryKey(Customer entity, Long primaryKeyValue) {
         if (entity != null) {
             entity.setCCustkey(primaryKeyValue.intValue());
-            log.debug("设置Customer主键: custkey={}", primaryKeyValue);
+            log.info("设置Customer主键: custkey={}", primaryKeyValue);
         }
     }
     
@@ -224,7 +224,7 @@ public class CustomerDataHandler extends AbstractTableDataHandler<Customer> {
                 }
             } catch (Exception e) {
                 failCount++;
-                log.debug("插入单条Customer记录失败: custkey={}, 错误: {}", 
+                log.info("插入单条Customer记录失败: custkey={}, 错误: {}", 
                     customer.getCCustkey(), e.getMessage());
             }
         }

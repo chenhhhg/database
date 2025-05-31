@@ -71,7 +71,7 @@ public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
                 }
             } else {
                 invalidCount++;
-                log.debug("无效的Orders记录被过滤: {}", record);
+                log.info("无效的Orders记录被过滤: {}", record);
             }
         }
         
@@ -84,7 +84,7 @@ public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
         List<String> fieldNames = getFieldNames();
         
         if (record == null || record.size() != fieldNames.size()) {
-            log.debug("Orders记录字段数量不匹配，期望: {}, 实际: {}", 
+            log.info("Orders记录字段数量不匹配，期望: {}, 实际: {}", 
                 fieldNames.size(), record != null ? record.size() : 0);
             return false;
         }
@@ -92,13 +92,13 @@ public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
         // 验证主键字段（o_orderkey）不能为空
         String orderkey = record.get(0); // o_orderkey是第一个字段
         if (orderkey == null || orderkey.trim().isEmpty()) {
-            log.debug("Orders主键o_orderkey为空");
+            log.info("Orders主键o_orderkey为空");
             return false;
         }
         
         // 验证主键是否为有效整数
         if (!TPCTableMetadata.isValidFieldValue(getTableName(), "o_orderkey", orderkey)) {
-            log.debug("Orders主键o_orderkey格式无效: {}", orderkey);
+            log.info("Orders主键o_orderkey格式无效: {}", orderkey);
             return false;
         }
         
@@ -108,11 +108,11 @@ public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
             try {
                 BigDecimal priceValue = new BigDecimal(totalprice.trim());
                 if (priceValue.compareTo(BigDecimal.ZERO) < 0) {
-                    log.debug("Orders总价字段o_totalprice小于0: {}", priceValue);
+                    log.info("Orders总价字段o_totalprice小于0: {}", priceValue);
                     return false;
                 }
             } catch (NumberFormatException e) {
-                log.debug("Orders总价字段o_totalprice格式无效: {}", totalprice);
+                log.info("Orders总价字段o_totalprice格式无效: {}", totalprice);
                 return false;
             }
         }
@@ -120,7 +120,7 @@ public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
         // 特殊清洗：o_orderdate（不为空检查）
         String orderdate = record.get(4); // o_orderdate
         if (orderdate == null || orderdate.trim().isEmpty()) {
-            log.debug("Orders订单日期字段o_orderdate为空，记录无效");
+            log.info("Orders订单日期字段o_orderdate为空，记录无效");
             return false;
         }
         
@@ -181,7 +181,7 @@ public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "o_comment", record.get(8));
             order.setOComment(comment);
             
-            log.debug("成功转换Orders记录: orderkey={}, custkey={}", order.getOOrderkey(), order.getOCustkey());
+            log.info("成功转换Orders记录: orderkey={}, custkey={}", order.getOOrderkey(), order.getOCustkey());
             return order;
             
         } catch (Exception e) {
@@ -202,10 +202,10 @@ public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
             
             if (maxOrder != null && maxOrder.getOOrderkey() != null) {
                 Long maxKey = maxOrder.getOOrderkey().longValue();
-                log.debug("Orders表最大主键值: {}", maxKey);
+                log.info("Orders表最大主键值: {}", maxKey);
                 return maxKey;
             } else {
-                log.debug("Orders表为空，返回主键值: 0");
+                log.info("Orders表为空，返回主键值: 0");
                 return 0L;
             }
         } catch (Exception e) {
@@ -218,7 +218,7 @@ public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
     protected void setEntityPrimaryKey(Orders entity, Long primaryKeyValue) {
         if (entity != null) {
             entity.setOOrderkey(primaryKeyValue.intValue());
-            log.debug("设置Orders主键: orderkey={}", primaryKeyValue);
+            log.info("设置Orders主键: orderkey={}", primaryKeyValue);
         }
     }
     
@@ -260,7 +260,7 @@ public class OrdersDataHandler extends AbstractTableDataHandler<Orders> {
                 }
             } catch (Exception e) {
                 failCount++;
-                log.debug("插入单条Orders记录失败: orderkey={}, 错误: {}", 
+                log.info("插入单条Orders记录失败: orderkey={}, 错误: {}", 
                     order.getOOrderkey(), e.getMessage());
             }
         }

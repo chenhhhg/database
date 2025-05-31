@@ -29,6 +29,10 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class TPCDataService {
 
+    // 注入外键管理器
+    @Autowired
+    private ForeignKeyManager foreignKeyManager;
+
     // 注入所有的表Handler
     @Autowired
     private CustomerDataHandler customerDataHandler;
@@ -53,8 +57,7 @@ public class TPCDataService {
     // TPC相关路径配置
     private static final String DBGEN_PATH = "/root/tpc/TPC-H V3.0.1/dbgen";
     private static final String TPC_DATA_BASE_PATH = "/root/mysql/tpc/TPC-H V3.0.1/dbgen/tbl";
-    private static final String MYSQL_TBL_PATH = "/var/lib/mysql/tpc/TPC-H V3.0.1/dbgen/tbl";
-    
+
     // TPC-H表名列表
     private static final List<String> TPC_TABLES = Arrays.asList(
         "customer", "orders", "lineitem", "nation", "partsupp", "part", "region", "supplier"
@@ -384,6 +387,9 @@ public class TPCDataService {
      * 导入TPC数据到MySQL
      */
     public R<String> importTPCData(TPCDataImportDTO dto) {
+        // 外键约束恢复标志
+        boolean foreignKeysDropped = false;
+        
         try {
             if (dto.getDataPath() == null || dto.getDataPath().trim().isEmpty()) {
                 return R.fail("数据路径不能为空");
@@ -426,11 +432,32 @@ public class TPCDataService {
             log.info("是否启用数据清洗: {}", dto.getEnableDataCleaning());
             log.info("可导入的表: {}", availableTables);
             
+            // ========== 第一步：删除外键约束 ==========
+            log.info("=== 步骤1：删除外键约束以避免导入冲突 ===");
+            try {
+                foreignKeyManager.dropAllForeignKeys();
+                foreignKeysDropped = true;
+                log.info("外键约束删除成功");
+            } catch (Exception e) {
+                log.warn("删除外键约束失败，尝试强制删除已知外键: {}", e.getMessage());
+                try {
+                    foreignKeyManager.forceDropKnownForeignKeys();
+                    foreignKeysDropped = true;
+                    log.info("强制删除已知外键约束完成");
+                } catch (Exception e2) {
+                    log.error("强制删除外键约束也失败: {}", e2.getMessage());
+                    return R.fail("删除外键约束失败，无法继续导入: " + e2.getMessage());
+                }
+            }
+            
             // 统计信息
             Map<String, Integer> importStats = new HashMap<>();
             Map<String, String> errorStats = new HashMap<>();
             
             long totalStartTime = System.currentTimeMillis();
+            
+            // ========== 第二步：数据导入 ==========
+            log.info("=== 步骤2：开始数据导入 ===");
             
             // 逐个处理每个表
             for (String table : availableTables) {
@@ -500,6 +527,26 @@ public class TPCDataService {
         } catch (Exception e) {
             log.error("导入TPC数据失败", e);
             return R.fail("导入数据失败: " + e.getMessage());
+        } finally {
+            // ========== 第三步：恢复外键约束（无论成功失败都要执行） ==========
+            if (foreignKeysDropped) {
+                log.info("=== 步骤3：恢复外键约束 ===");
+                try {
+                    foreignKeyManager.restoreAllForeignKeys();
+                    log.info("外键约束恢复成功");
+                } catch (Exception e) {
+                    log.error("恢复外键约束失败: {}", e.getMessage());
+                    // 尝试创建标准外键约束
+                    try {
+                        log.info("尝试创建标准TPC-H外键约束");
+                        foreignKeyManager.createStandardForeignKeys();
+                        log.info("标准外键约束创建完成");
+                    } catch (Exception e2) {
+                        log.error("创建标准外键约束也失败: {}", e2.getMessage());
+                        log.warn("请手动检查并恢复数据库外键约束");
+                    }
+                }
+            }
         }
     }
     

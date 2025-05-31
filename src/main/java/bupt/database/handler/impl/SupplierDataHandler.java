@@ -70,7 +70,7 @@ public class SupplierDataHandler extends AbstractTableDataHandler<Supplier> {
                 }
             } else {
                 invalidCount++;
-                log.debug("无效的Supplier记录被过滤: {}", record);
+                log.info("无效的Supplier记录被过滤: {}", record);
             }
         }
         
@@ -83,36 +83,37 @@ public class SupplierDataHandler extends AbstractTableDataHandler<Supplier> {
         List<String> fieldNames = getFieldNames();
         
         if (record == null || record.size() != fieldNames.size()) {
-            log.debug("Supplier记录字段数量不匹配，期望: {}, 实际: {}", 
+            log.info("Supplier记录字段数量不匹配，期望: {}, 实际: {}", 
                 fieldNames.size(), record != null ? record.size() : 0);
             return false;
         }
         
-        // 特殊清洗：s_suppkey（主键不为空检查，>=0）
-        String suppkey = record.get(0); // s_suppkey
+        // 验证主键字段（s_suppkey）不能为空
+        String suppkey = record.get(0); // s_suppkey是第一个字段
         if (suppkey == null || suppkey.trim().isEmpty()) {
-            log.debug("Supplier主键字段s_suppkey为空");
+            log.info("Supplier主键字段s_suppkey为空");
             return false;
         }
         
+        // 特殊清洗：s_suppkey数值范围检查（>=0）
         try {
-            int suppkeyValue = Integer.parseInt(suppkey.trim());
+            Integer suppkeyValue = Integer.valueOf(suppkey.trim());
             if (suppkeyValue < 0) {
-                log.debug("Supplier主键字段s_suppkey小于0: {}", suppkeyValue);
+                log.info("Supplier主键字段s_suppkey小于0: {}", suppkeyValue);
                 return false;
             }
         } catch (NumberFormatException e) {
-            log.debug("Supplier主键字段s_suppkey格式无效: {}", suppkey);
+            log.info("Supplier主键字段s_suppkey格式无效: {}", suppkey);
             return false;
         }
         
-        // 特殊清洗：s_acctbal（数值类型检查）
+        // 特殊清洗：s_acctbal数值类型检查
         String acctbal = record.get(5); // s_acctbal
         if (acctbal != null && !acctbal.trim().isEmpty()) {
             try {
-                new BigDecimal(acctbal.trim()); // 验证是否为有效数值
+                new BigDecimal(acctbal.trim());
             } catch (NumberFormatException e) {
-                log.debug("Supplier账户余额字段s_acctbal格式无效: {}", acctbal);
+                log.info("Supplier账户余额字段s_acctbal格式无效: {}", acctbal);
                 return false;
             }
         }
@@ -174,7 +175,7 @@ public class SupplierDataHandler extends AbstractTableDataHandler<Supplier> {
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "s_comment", record.get(6));
             supplier.setSComment(comment);
             
-            log.debug("成功转换Supplier记录: suppkey={}, name={}, acctbal={}", 
+            log.info("成功转换Supplier记录: suppkey={}, name={}, acctbal={}", 
                 supplier.getSSuppkey(), supplier.getSName(), supplier.getSAcctbal());
             return supplier;
             
@@ -196,10 +197,10 @@ public class SupplierDataHandler extends AbstractTableDataHandler<Supplier> {
             
             if (maxSupplier != null && maxSupplier.getSSuppkey() != null) {
                 Long maxKey = maxSupplier.getSSuppkey().longValue();
-                log.debug("Supplier表最大主键值: {}", maxKey);
+                log.info("Supplier表最大主键值: {}", maxKey);
                 return maxKey;
             } else {
-                log.debug("Supplier表为空，返回主键值: 0");
+                log.info("Supplier表为空，返回主键值: 0");
                 return 0L;
             }
         } catch (Exception e) {
@@ -212,7 +213,7 @@ public class SupplierDataHandler extends AbstractTableDataHandler<Supplier> {
     protected void setEntityPrimaryKey(Supplier entity, Long primaryKeyValue) {
         if (entity != null) {
             entity.setSSuppkey(primaryKeyValue.intValue());
-            log.debug("设置Supplier主键: suppkey={}", primaryKeyValue);
+            log.info("设置Supplier主键: suppkey={}", primaryKeyValue);
         }
     }
     
@@ -251,7 +252,7 @@ public class SupplierDataHandler extends AbstractTableDataHandler<Supplier> {
                 }
             } catch (Exception e) {
                 failCount++;
-                log.debug("插入单条Supplier记录失败: suppkey={}, 错误: {}", 
+                log.info("插入单条Supplier记录失败: suppkey={}, 错误: {}", 
                     supplier.getSSuppkey(), e.getMessage());
             }
         }

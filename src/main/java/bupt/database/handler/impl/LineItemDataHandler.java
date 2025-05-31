@@ -71,7 +71,7 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
                 }
             } else {
                 invalidCount++;
-                log.debug("无效的LineItem记录被过滤: {}", record);
+                log.info("无效的LineItem记录被过滤: {}", record);
             }
         }
         
@@ -84,7 +84,7 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
         List<String> fieldNames = getFieldNames();
         
         if (record == null || record.size() != fieldNames.size()) {
-            log.debug("LineItem记录字段数量不匹配，期望: {}, 实际: {}", 
+            log.info("LineItem记录字段数量不匹配，期望: {}, 实际: {}", 
                 fieldNames.size(), record != null ? record.size() : 0);
             return false;
         }
@@ -94,14 +94,14 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
         String linenumber = record.get(3); // l_linenumber
         if (orderkey == null || orderkey.trim().isEmpty() || 
             linenumber == null || linenumber.trim().isEmpty()) {
-            log.debug("LineItem主键字段为空: orderkey={}, linenumber={}", orderkey, linenumber);
+            log.info("LineItem主键字段为空: orderkey={}, linenumber={}", orderkey, linenumber);
             return false;
         }
         
         // 特殊清洗：l_quantity（数量不为空检查）
         String quantity = record.get(4); // l_quantity
         if (quantity == null || quantity.trim().isEmpty()) {
-            log.debug("LineItem数量字段l_quantity为空，记录无效");
+            log.info("LineItem数量字段l_quantity为空，记录无效");
             return false;
         }
         
@@ -109,11 +109,11 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
         try {
             BigDecimal quantityValue = new BigDecimal(quantity.trim());
             if (quantityValue.compareTo(BigDecimal.ZERO) < 0) {
-                log.debug("LineItem数量字段l_quantity小于0: {}", quantityValue);
+                log.info("LineItem数量字段l_quantity小于0: {}", quantityValue);
                 return false;
             }
         } catch (NumberFormatException e) {
-            log.debug("LineItem数量字段l_quantity格式无效: {}", quantity);
+            log.info("LineItem数量字段l_quantity格式无效: {}", quantity);
             return false;
         }
         
@@ -123,11 +123,11 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
             try {
                 BigDecimal priceValue = new BigDecimal(extendedprice.trim());
                 if (priceValue.compareTo(BigDecimal.ZERO) < 0) {
-                    log.debug("LineItem扩展价格字段l_extendedprice小于0: {}", priceValue);
+                    log.info("LineItem扩展价格字段l_extendedprice小于0: {}", priceValue);
                     return false;
                 }
             } catch (NumberFormatException e) {
-                log.debug("LineItem扩展价格字段l_extendedprice格式无效: {}", extendedprice);
+                log.info("LineItem扩展价格字段l_extendedprice格式无效: {}", extendedprice);
                 return false;
             }
         }
@@ -218,7 +218,7 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "l_comment", record.get(15));
             lineitem.setLComment(comment);
             
-            log.debug("成功转换LineItem记录: orderkey={}, linenumber={}, quantity={}", 
+            log.info("成功转换LineItem记录: orderkey={}, linenumber={}, quantity={}", 
                 lineitem.getLOrderkey(), lineitem.getLLinenumber(), lineitem.getLQuantity());
             return lineitem;
             
@@ -263,7 +263,7 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
                 }
             } catch (Exception e) {
                 failCount++;
-                log.debug("插入单条LineItem记录失败: orderkey={}, linenumber={}, 错误: {}", 
+                log.info("插入单条LineItem记录失败: orderkey={}, linenumber={}, 错误: {}", 
                     lineitem.getLOrderkey(), lineitem.getLLinenumber(), e.getMessage());
             }
         }
@@ -296,10 +296,10 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
             
             if (maxLineitem != null && maxLineitem.getLOrderkey() != null) {
                 Long maxKey = maxLineitem.getLOrderkey().longValue();
-                log.debug("LineItem表最大orderkey值: {}", maxKey);
+                log.info("LineItem表最大orderkey值: {}", maxKey);
                 return maxKey;
             } else {
-                log.debug("LineItem表为空，返回主键值: 0");
+                log.info("LineItem表为空，返回主键值: 0");
                 return 0L;
             }
         } catch (Exception e) {
@@ -314,7 +314,7 @@ public class LineItemDataHandler extends AbstractTableDataHandler<Lineitem> {
             // 对于复合主键，我们设置orderkey为传入值，linenumber为1（表示该订单的第一行）
             entity.setLOrderkey(primaryKeyValue.intValue());
             entity.setLLinenumber(1);
-            log.debug("设置LineItem主键: orderkey={}, linenumber=1", primaryKeyValue);
+            log.info("设置LineItem主键: orderkey={}, linenumber=1", primaryKeyValue);
         }
     }
 } 

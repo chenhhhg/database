@@ -33,11 +33,11 @@ public abstract class AbstractTableDataHandler<T> implements TableDataHandler<T>
             return;
         }
         
-        log.debug("开始为{}个{}实体设置递增主键", entities.size(), getTableName());
+        log.info("开始为{}个{}实体设置递增主键", entities.size(), getTableName());
         
         // 获取当前最大主键值
         Long maxPrimaryKey = getMaxPrimaryKey();
-        log.debug("{}表当前最大主键值: {}", getTableName(), maxPrimaryKey);
+        log.info("{}表当前最大主键值: {}", getTableName(), maxPrimaryKey);
         
         // 为每个实体设置递增主键
         Long currentPrimaryKey = maxPrimaryKey;
@@ -48,7 +48,7 @@ public abstract class AbstractTableDataHandler<T> implements TableDataHandler<T>
             }
         }
         
-        log.debug("完成设置{}实体递增主键，起始值: {}, 结束值: {}", 
+        log.info("完成设置{}实体递增主键，起始值: {}, 结束值: {}", 
             getTableName(), maxPrimaryKey + 1, currentPrimaryKey);
     }
     

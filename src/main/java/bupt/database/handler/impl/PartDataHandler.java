@@ -70,7 +70,7 @@ public class PartDataHandler extends AbstractTableDataHandler<Part> {
                 }
             } else {
                 invalidCount++;
-                log.debug("无效的Part记录被过滤: {}", record);
+                log.info("无效的Part记录被过滤: {}", record);
             }
         }
         
@@ -83,44 +83,44 @@ public class PartDataHandler extends AbstractTableDataHandler<Part> {
         List<String> fieldNames = getFieldNames();
         
         if (record == null || record.size() != fieldNames.size()) {
-            log.debug("Part记录字段数量不匹配，期望: {}, 实际: {}", 
+            log.info("Part记录字段数量不匹配，期望: {}, 实际: {}", 
                 fieldNames.size(), record != null ? record.size() : 0);
             return false;
         }
         
-        // 验证主键字段不能为空
-        String partkey = record.get(0); // p_partkey
+        // 验证主键字段（p_partkey）不能为空
+        String partkey = record.get(0); // p_partkey是第一个字段
         if (partkey == null || partkey.trim().isEmpty()) {
-            log.debug("Part主键字段p_partkey为空");
+            log.info("Part主键字段p_partkey为空");
             return false;
         }
         
-        // 特殊清洗：p_size（整数类型检查，>=0）
+        // 特殊清洗：p_size整数类型检查（>=0）
         String size = record.get(5); // p_size
         if (size != null && !size.trim().isEmpty()) {
             try {
-                int sizeValue = Integer.parseInt(size.trim());
+                Integer sizeValue = Integer.valueOf(size.trim());
                 if (sizeValue < 0) {
-                    log.debug("Part尺寸字段p_size小于0: {}", sizeValue);
+                    log.info("Part尺寸字段p_size小于0: {}", sizeValue);
                     return false;
                 }
             } catch (NumberFormatException e) {
-                log.debug("Part尺寸字段p_size格式无效: {}", size);
+                log.info("Part尺寸字段p_size格式无效: {}", size);
                 return false;
             }
         }
         
-        // 特殊清洗：p_retailprice（数值类型检查，>=0）
+        // 特殊清洗：p_retailprice数值类型检查（>=0）
         String retailprice = record.get(7); // p_retailprice
         if (retailprice != null && !retailprice.trim().isEmpty()) {
             try {
                 BigDecimal priceValue = new BigDecimal(retailprice.trim());
                 if (priceValue.compareTo(BigDecimal.ZERO) < 0) {
-                    log.debug("Part零售价格字段p_retailprice小于0: {}", priceValue);
+                    log.info("Part零售价格字段p_retailprice小于0: {}", priceValue);
                     return false;
                 }
             } catch (NumberFormatException e) {
-                log.debug("Part零售价格字段p_retailprice格式无效: {}", retailprice);
+                log.info("Part零售价格字段p_retailprice格式无效: {}", retailprice);
                 return false;
             }
         }
@@ -183,7 +183,7 @@ public class PartDataHandler extends AbstractTableDataHandler<Part> {
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "p_comment", record.get(8));
             part.setPComment(comment);
             
-            log.debug("成功转换Part记录: partkey={}, name={}, size={}", 
+            log.info("成功转换Part记录: partkey={}, name={}, size={}", 
                 part.getPPartkey(), part.getPName(), part.getPSize());
             return part;
             
@@ -205,10 +205,10 @@ public class PartDataHandler extends AbstractTableDataHandler<Part> {
             
             if (maxPart != null && maxPart.getPPartkey() != null) {
                 Long maxKey = maxPart.getPPartkey().longValue();
-                log.debug("Part表最大主键值: {}", maxKey);
+                log.info("Part表最大主键值: {}", maxKey);
                 return maxKey;
             } else {
-                log.debug("Part表为空，返回主键值: 0");
+                log.info("Part表为空，返回主键值: 0");
                 return 0L;
             }
         } catch (Exception e) {
@@ -221,7 +221,7 @@ public class PartDataHandler extends AbstractTableDataHandler<Part> {
     protected void setEntityPrimaryKey(Part entity, Long primaryKeyValue) {
         if (entity != null) {
             entity.setPPartkey(primaryKeyValue.intValue());
-            log.debug("设置Part主键: partkey={}", primaryKeyValue);
+            log.info("设置Part主键: partkey={}", primaryKeyValue);
         }
     }
     
@@ -260,7 +260,7 @@ public class PartDataHandler extends AbstractTableDataHandler<Part> {
                 }
             } catch (Exception e) {
                 failCount++;
-                log.debug("插入单条Part记录失败: partkey={}, 错误: {}", 
+                log.info("插入单条Part记录失败: partkey={}, 错误: {}", 
                     part.getPPartkey(), e.getMessage());
             }
         }

@@ -69,7 +69,7 @@ public class NationDataHandler extends AbstractTableDataHandler<Nation> {
                 }
             } else {
                 invalidCount++;
-                log.debug("无效的Nation记录被过滤: {}", record);
+                log.info("无效的Nation记录被过滤: {}", record);
             }
         }
         
@@ -82,40 +82,41 @@ public class NationDataHandler extends AbstractTableDataHandler<Nation> {
         List<String> fieldNames = getFieldNames();
         
         if (record == null || record.size() != fieldNames.size()) {
-            log.debug("Nation记录字段数量不匹配，期望: {}, 实际: {}", 
+            log.info("Nation记录字段数量不匹配，期望: {}, 实际: {}", 
                 fieldNames.size(), record != null ? record.size() : 0);
             return false;
         }
         
-        // 特殊清洗：n_nationkey（主键不为空检查，>=0）
-        String nationkey = record.get(0); // n_nationkey
+        // 验证主键字段（n_nationkey）不能为空
+        String nationkey = record.get(0); // n_nationkey是第一个字段
         if (nationkey == null || nationkey.trim().isEmpty()) {
-            log.debug("Nation主键字段n_nationkey为空");
+            log.info("Nation主键字段n_nationkey为空");
             return false;
         }
         
+        // 特殊清洗：n_nationkey数值范围检查（>=0）
         try {
-            int nationkeyValue = Integer.parseInt(nationkey.trim());
+            Integer nationkeyValue = Integer.valueOf(nationkey.trim());
             if (nationkeyValue < 0) {
-                log.debug("Nation主键字段n_nationkey小于0: {}", nationkeyValue);
+                log.info("Nation主键字段n_nationkey小于0: {}", nationkeyValue);
                 return false;
             }
         } catch (NumberFormatException e) {
-            log.debug("Nation主键字段n_nationkey格式无效: {}", nationkey);
+            log.info("Nation主键字段n_nationkey格式无效: {}", nationkey);
             return false;
         }
         
-        // 特殊清洗：n_name（不为空检查，长度检查）
+        // 特殊清洗：n_name不为空检查
         String name = record.get(1); // n_name
         if (name == null || name.trim().isEmpty()) {
-            log.debug("Nation国家名称字段n_name为空");
+            log.info("Nation国家名称字段n_name为空");
             return false;
         }
         
-        // 检查名称长度
+        // 特殊清洗：n_name长度检查
         Integer maxLength = TPCTableMetadata.getFieldLength(getTableName(), "n_name");
         if (maxLength != null && name.trim().length() > maxLength) {
-            log.debug("Nation国家名称字段n_name长度超限: 当前={}, 最大={}", name.trim().length(), maxLength);
+            log.info("Nation国家名称字段n_name长度超限: 当前={}, 最大={}", name.trim().length(), maxLength);
             return false;
         }
         
@@ -163,7 +164,7 @@ public class NationDataHandler extends AbstractTableDataHandler<Nation> {
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "n_comment", record.get(3));
             nation.setNComment(comment);
             
-            log.debug("成功转换Nation记录: nationkey={}, name={}", nation.getNNationkey(), nation.getNName());
+            log.info("成功转换Nation记录: nationkey={}, name={}", nation.getNNationkey(), nation.getNName());
             return nation;
             
         } catch (Exception e) {
@@ -184,10 +185,10 @@ public class NationDataHandler extends AbstractTableDataHandler<Nation> {
             
             if (maxNation != null && maxNation.getNNationkey() != null) {
                 Long maxKey = maxNation.getNNationkey().longValue();
-                log.debug("Nation表最大主键值: {}", maxKey);
+                log.info("Nation表最大主键值: {}", maxKey);
                 return maxKey;
             } else {
-                log.debug("Nation表为空，返回主键值: 0");
+                log.info("Nation表为空，返回主键值: 0");
                 return 0L;
             }
         } catch (Exception e) {
@@ -200,7 +201,7 @@ public class NationDataHandler extends AbstractTableDataHandler<Nation> {
     protected void setEntityPrimaryKey(Nation entity, Long primaryKeyValue) {
         if (entity != null) {
             entity.setNNationkey(primaryKeyValue.intValue());
-            log.debug("设置Nation主键: nationkey={}", primaryKeyValue);
+            log.info("设置Nation主键: nationkey={}", primaryKeyValue);
         }
     }
     
@@ -239,7 +240,7 @@ public class NationDataHandler extends AbstractTableDataHandler<Nation> {
                 }
             } catch (Exception e) {
                 failCount++;
-                log.debug("插入单条Nation记录失败: nationkey={}, 错误: {}", 
+                log.info("插入单条Nation记录失败: nationkey={}, 错误: {}", 
                     nation.getNNationkey(), e.getMessage());
             }
         }

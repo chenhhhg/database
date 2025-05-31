@@ -70,7 +70,7 @@ public class PartSuppDataHandler extends AbstractTableDataHandler<Partsupp> {
                 }
             } else {
                 invalidCount++;
-                log.debug("无效的PartSupp记录被过滤: {}", record);
+                log.info("无效的PartSupp记录被过滤: {}", record);
             }
         }
         
@@ -83,7 +83,7 @@ public class PartSuppDataHandler extends AbstractTableDataHandler<Partsupp> {
         List<String> fieldNames = getFieldNames();
         
         if (record == null || record.size() != fieldNames.size()) {
-            log.debug("PartSupp记录字段数量不匹配，期望: {}, 实际: {}", 
+            log.info("PartSupp记录字段数量不匹配，期望: {}, 实际: {}", 
                 fieldNames.size(), record != null ? record.size() : 0);
             return false;
         }
@@ -93,36 +93,36 @@ public class PartSuppDataHandler extends AbstractTableDataHandler<Partsupp> {
         String suppkey = record.get(1); // ps_suppkey
         if (partkey == null || partkey.trim().isEmpty() || 
             suppkey == null || suppkey.trim().isEmpty()) {
-            log.debug("PartSupp主键字段为空: partkey={}, suppkey={}", partkey, suppkey);
+            log.info("PartSupp主键字段为空: partkey={}, suppkey={}", partkey, suppkey);
             return false;
         }
         
-        // 特殊清洗：ps_availqty（零件供应数量范围检查>=0）
+        // 特殊清洗：ps_availqty数值范围检查（>=0）
         String availqty = record.get(2); // ps_availqty
         if (availqty != null && !availqty.trim().isEmpty()) {
             try {
-                int availqtyValue = Integer.parseInt(availqty.trim());
+                Integer availqtyValue = Integer.valueOf(availqty.trim());
                 if (availqtyValue < 0) {
-                    log.debug("PartSupp零件供应数量字段ps_availqty小于0: {}", availqtyValue);
+                    log.info("PartSupp零件供应数量字段ps_availqty小于0: {}", availqtyValue);
                     return false;
                 }
             } catch (NumberFormatException e) {
-                log.debug("PartSupp零件供应数量字段ps_availqty格式无效: {}", availqty);
+                log.info("PartSupp零件供应数量字段ps_availqty格式无效: {}", availqty);
                 return false;
             }
         }
         
-        // 特殊清洗：ps_supplycost（数值类型检查，>=0）
+        // 特殊清洗：ps_supplycost数值类型检查（>=0）
         String supplycost = record.get(3); // ps_supplycost
         if (supplycost != null && !supplycost.trim().isEmpty()) {
             try {
                 BigDecimal costValue = new BigDecimal(supplycost.trim());
                 if (costValue.compareTo(BigDecimal.ZERO) < 0) {
-                    log.debug("PartSupp供应成本字段ps_supplycost小于0: {}", costValue);
+                    log.info("PartSupp供应成本字段ps_supplycost小于0: {}", costValue);
                     return false;
                 }
             } catch (NumberFormatException e) {
-                log.debug("PartSupp供应成本字段ps_supplycost格式无效: {}", supplycost);
+                log.info("PartSupp供应成本字段ps_supplycost格式无效: {}", supplycost);
                 return false;
             }
         }
@@ -169,7 +169,7 @@ public class PartSuppDataHandler extends AbstractTableDataHandler<Partsupp> {
             String comment = TPCTableMetadata.cleanFieldValue(getTableName(), "ps_comment", record.get(4));
             partsupp.setPsComment(comment);
             
-            log.debug("成功转换PartSupp记录: partkey={}, suppkey={}, availqty={}", 
+            log.info("成功转换PartSupp记录: partkey={}, suppkey={}, availqty={}", 
                 partsupp.getPsPartkey(), partsupp.getPsSuppkey(), partsupp.getPsAvailqty());
             return partsupp;
             
@@ -214,7 +214,7 @@ public class PartSuppDataHandler extends AbstractTableDataHandler<Partsupp> {
                 }
             } catch (Exception e) {
                 failCount++;
-                log.debug("插入单条PartSupp记录失败: partkey={}, suppkey={}, 错误: {}", 
+                log.info("插入单条PartSupp记录失败: partkey={}, suppkey={}, 错误: {}", 
                     partsupp.getPsPartkey(), partsupp.getPsSuppkey(), e.getMessage());
             }
         }
@@ -247,10 +247,10 @@ public class PartSuppDataHandler extends AbstractTableDataHandler<Partsupp> {
             
             if (maxPartsupp != null && maxPartsupp.getPsPartkey() != null) {
                 Long maxKey = maxPartsupp.getPsPartkey().longValue();
-                log.debug("PartSupp表最大partkey值: {}", maxKey);
+                log.info("PartSupp表最大partkey值: {}", maxKey);
                 return maxKey;
             } else {
-                log.debug("PartSupp表为空，返回主键值: 0");
+                log.info("PartSupp表为空，返回主键值: 0");
                 return 0L;
             }
         } catch (Exception e) {
@@ -262,10 +262,10 @@ public class PartSuppDataHandler extends AbstractTableDataHandler<Partsupp> {
     @Override
     protected void setEntityPrimaryKey(Partsupp entity, Long primaryKeyValue) {
         if (entity != null) {
-            // 对于复合主键，我们设置partkey为传入值，suppkey为1（固定值）
+            // 对于复合主键，我们设置partkey为传入值，suppkey为1（假设第一个供应商）
             entity.setPsPartkey(primaryKeyValue.intValue());
             entity.setPsSuppkey(1);
-            log.debug("设置PartSupp主键: partkey={}, suppkey=1", primaryKeyValue);
+            log.info("设置PartSupp主键: partkey={}, suppkey=1", primaryKeyValue);
         }
     }
 } 
