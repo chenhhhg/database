@@ -25,4 +25,19 @@ public class ExportRequest {
      * 字段分隔符，默认为制表符
      */
     private String delimiter = "\t";
+    
+    /**
+     * 是否启用分批导出，默认true（避免OOM）
+     */
+    private Boolean enableBatchExport = true;
+    
+    /**
+     * 批处理大小（每批处理的记录数），默认10000条
+     */
+    private Integer batchSize = 10000;
+    
+    /**
+     * 内存安全模式：更小的批次处理大型表，默认true
+     */
+    private Boolean memorySafeMode = true;
 } 

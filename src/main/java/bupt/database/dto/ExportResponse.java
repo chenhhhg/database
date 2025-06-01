@@ -36,4 +36,40 @@ public class ExportResponse {
      * 导出耗时（毫秒）
      */
     private Long duration;
+    
+    /**
+     * 分批导出统计信息
+     */
+    private Map<String, BatchExportStats> batchStats;
+    
+    /**
+     * 分批导出统计信息内部类
+     */
+    @Data
+    public static class BatchExportStats {
+        /**
+         * 处理的批次数量
+         */
+        private Integer batchCount;
+        
+        /**
+         * 平均每批处理时间（毫秒）
+         */
+        private Long avgBatchTime;
+        
+        /**
+         * 最大批次处理时间（毫秒）
+         */
+        private Long maxBatchTime;
+        
+        /**
+         * 是否使用了内存安全模式
+         */
+        private Boolean memorySafeModeUsed;
+        
+        /**
+         * 实际使用的批次大小
+         */
+        private Integer actualBatchSize;
+    }
 } 
