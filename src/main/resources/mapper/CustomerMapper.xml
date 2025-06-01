@@ -23,7 +23,135 @@
         C_MKTSEGMENT,C_COMMENT,C_PASSWORD,
         C_ROLE
     </sql>
+    
+    <!-- 动态查询条件 -->
+    <sql id="whereConditions">
+        <where>
+            <if test="query.cCustkey != null">
+                AND C_CUSTKEY = #{query.cCustkey}
+            </if>
+            <if test="query.cCustkeyList != null and query.cCustkeyList.size() > 0">
+                AND C_CUSTKEY IN
+                <foreach collection="query.cCustkeyList" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="query.cName != null and query.cName != ''">
+                <choose>
+                    <when test="query.fuzzySearch == true">
+                        AND C_NAME LIKE CONCAT('%', #{query.cName}, '%')
+                    </when>
+                    <otherwise>
+                        AND C_NAME = #{query.cName}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="query.cAddress != null and query.cAddress != ''">
+                <choose>
+                    <when test="query.fuzzySearch == true">
+                        AND C_ADDRESS LIKE CONCAT('%', #{query.cAddress}, '%')
+                    </when>
+                    <otherwise>
+                        AND C_ADDRESS = #{query.cAddress}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="query.cNationkey != null">
+                AND C_NATIONKEY = #{query.cNationkey}
+            </if>
+            <if test="query.cNationkeyList != null and query.cNationkeyList.size() > 0">
+                AND C_NATIONKEY IN
+                <foreach collection="query.cNationkeyList" item="nationkey" open="(" separator="," close=")">
+                    #{nationkey}
+                </foreach>
+            </if>
+            <if test="query.cPhone != null and query.cPhone != ''">
+                <choose>
+                    <when test="query.fuzzySearch == true">
+                        AND C_PHONE LIKE CONCAT('%', #{query.cPhone}, '%')
+                    </when>
+                    <otherwise>
+                        AND C_PHONE = #{query.cPhone}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="query.cAcctbalMin != null">
+                AND C_ACCTBAL >= #{query.cAcctbalMin}
+            </if>
+            <if test="query.cAcctbalMax != null">
+                AND C_ACCTBAL &lt;= #{query.cAcctbalMax}
+            </if>
+            <if test="query.cMktsegment != null and query.cMktsegment != ''">
+                AND C_MKTSEGMENT = #{query.cMktsegment}
+            </if>
+            <if test="query.cMktsegmentList != null and query.cMktsegmentList.size() > 0">
+                AND C_MKTSEGMENT IN
+                <foreach collection="query.cMktsegmentList" item="segment" open="(" separator="," close=")">
+                    #{segment}
+                </foreach>
+            </if>
+            <if test="query.cComment != null and query.cComment != ''">
+                <choose>
+                    <when test="query.fuzzySearch == true">
+                        AND C_COMMENT LIKE CONCAT('%', #{query.cComment}, '%')
+                    </when>
+                    <otherwise>
+                        AND C_COMMENT = #{query.cComment}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="query.cRole != null">
+                AND C_ROLE = #{query.cRole}
+            </if>
+            <if test="query.cRoleList != null and query.cRoleList.size() > 0">
+                AND C_ROLE IN
+                <foreach collection="query.cRoleList" item="role" open="(" separator="," close=")">
+                    #{role}
+                </foreach>
+            </if>
+        </where>
+    </sql>
+    
     <select id="selectListPage" resultType="bupt.database.entity.Customer">
         select * from customer limit #{page}, #{size}
+    </select>
+    
+    <!-- 根据条件查询客户列表 -->
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM customer
+        <include refid="whereConditions"/>
+        <if test="query.sortField != null and query.sortField != ''">
+            ORDER BY 
+            <choose>
+                <when test="query.sortField == 'cCustkey'">C_CUSTKEY</when>
+                <when test="query.sortField == 'cName'">C_NAME</when>
+                <when test="query.sortField == 'cAddress'">C_ADDRESS</when>
+                <when test="query.sortField == 'cNationkey'">C_NATIONKEY</when>
+                <when test="query.sortField == 'cPhone'">C_PHONE</when>
+                <when test="query.sortField == 'cAcctbal'">C_ACCTBAL</when>
+                <when test="query.sortField == 'cMktsegment'">C_MKTSEGMENT</when>
+                <when test="query.sortField == 'cComment'">C_COMMENT</when>
+                <when test="query.sortField == 'cRole'">C_ROLE</when>
+                <otherwise>C_CUSTKEY</otherwise>
+            </choose>
+            <if test="query.sortDirection != null and (query.sortDirection == 'DESC' or query.sortDirection == 'desc')">
+                DESC
+            </if>
+            <if test="query.sortDirection == null or query.sortDirection == 'ASC' or query.sortDirection == 'asc'">
+                ASC
+            </if>
+        </if>
+        <if test="query.page != null and query.size != null">
+            LIMIT #{query.size} OFFSET #{query.page}
+        </if>
+    </select>
+    
+    <!-- 根据条件统计客户数量 -->
+    <select id="countByConditions" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM customer
+        <include refid="whereConditions"/>
     </select>
 </mapper>

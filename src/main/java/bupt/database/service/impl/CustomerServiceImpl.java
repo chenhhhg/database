@@ -2,6 +2,8 @@ package bupt.database.service.impl;
 
 import bupt.database.config.DynamicDataSourceConfig;
 import bupt.database.dto.AuthDTO;
+import bupt.database.dto.CustomerQueryRequest;
+import bupt.database.dto.CustomerQueryResponse;
 import bupt.database.dto.UserCreateDTO;
 import bupt.database.util.DatabaseConfig;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -183,6 +185,48 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer>
     @Override
     public Long getUserCnt() {
         return baseMapper.selectCount(new QueryWrapper<>());
+    }
+
+    @Override
+    public CustomerQueryResponse queryCustomers(CustomerQueryRequest request) {
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            // 参数验证和默认值设置
+            if (request.getPage() == null || request.getPage() < 1) {
+                request.setPage(1);
+            }
+            if (request.getSize() == null || request.getSize() < 1) {
+                request.setSize(10);
+            }
+            if (request.getFuzzySearch() == null) {
+                request.setFuzzySearch(true);
+            }
+            
+            // 计算分页偏移量
+            int offset = (request.getPage() - 1) * request.getSize();
+            request.setPage(offset);
+            
+            log.info("开始查询客户信息，条件: {}", request);
+            
+            // 查询数据和总数
+            List<Customer> customers = mapper.selectByConditions(request);
+            Long total = mapper.countByConditions(request);
+            
+            long duration = System.currentTimeMillis() - startTime;
+            
+            log.info("客户查询完成，查询到 {} 条记录，总计 {} 条，耗时 {}ms", 
+                    customers.size(), total, duration);
+            
+            // 恢复原始页码
+            request.setPage((request.getPage() / request.getSize()) + 1);
+            
+            return new CustomerQueryResponse(customers, total, request.getPage(), request.getSize(), duration);
+            
+        } catch (Exception e) {
+            log.error("查询客户信息失败: {}", e.getMessage(), e);
+            throw new RuntimeException("查询客户信息失败: " + e.getMessage());
+        }
     }
 }
 

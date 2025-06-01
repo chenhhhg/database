@@ -1,5 +1,6 @@
 package bupt.database.mapper;
 
+import bupt.database.dto.CustomerQueryRequest;
 import bupt.database.entity.Customer;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
@@ -15,6 +16,16 @@ import java.util.List;
 public interface CustomerMapper extends BaseMapper<Customer> {
 
     List<Customer> selectListPage(@Param("page") Integer page, @Param("size") Integer size);
+    
+    /**
+     * 根据条件查询客户列表
+     */
+    List<Customer> selectByConditions(@Param("query") CustomerQueryRequest query);
+    
+    /**
+     * 根据条件统计客户数量
+     */
+    Long countByConditions(@Param("query") CustomerQueryRequest query);
 }
 
 

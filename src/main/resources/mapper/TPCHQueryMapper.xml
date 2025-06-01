@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bupt.database.mapper.TPCHQueryMapper">
+
+    <!-- 定价汇总报表查询结果映射 -->
+    <resultMap id="PricingSummaryResultMap" type="bupt.database.dto.PricingSummaryResult">
+        <result property="lReturnflag" column="l_returnflag" jdbcType="CHAR"/>
+        <result property="lLinestatus" column="l_linestatus" jdbcType="CHAR"/>
+        <result property="sumQty" column="sum_qty" jdbcType="DECIMAL"/>
+        <result property="sumBasePrice" column="sum_base_price" jdbcType="DECIMAL"/>
+        <result property="sumDiscPrice" column="sum_disc_price" jdbcType="DECIMAL"/>
+        <result property="sumCharge" column="sum_charge" jdbcType="DECIMAL"/>
+        <result property="avgQty" column="avg_qty" jdbcType="DECIMAL"/>
+        <result property="avgPrice" column="avg_price" jdbcType="DECIMAL"/>
+        <result property="avgDisc" column="avg_disc" jdbcType="DECIMAL"/>
+        <result property="countOrder" column="count_order" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <!-- 最低成本供应商查询结果映射 -->
+    <resultMap id="MinCostSupplierResultMap" type="bupt.database.dto.MinCostSupplierResult">
+        <result property="sAcctbal" column="s_acctbal" jdbcType="DECIMAL"/>
+        <result property="sName" column="s_name" jdbcType="VARCHAR"/>
+        <result property="nName" column="n_name" jdbcType="CHAR"/>
+        <result property="pPartkey" column="p_partkey" jdbcType="INTEGER"/>
+        <result property="pMfgr" column="p_mfgr" jdbcType="CHAR"/>
+        <result property="sAddress" column="s_address" jdbcType="VARCHAR"/>
+        <result property="sPhone" column="s_phone" jdbcType="CHAR"/>
+        <result property="sComment" column="s_comment" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 定价汇总报表查询 -->
+    <select id="pricingSummaryReport" resultMap="PricingSummaryResultMap">
+        SELECT 
+            l_returnflag, 
+            l_linestatus, 
+            SUM(l_quantity) AS sum_qty, 
+            SUM(l_extendedprice) AS sum_base_price, 
+            SUM(l_extendedprice * (1 - l_discount)) AS sum_disc_price, 
+            SUM(l_extendedprice * (1 - l_discount) * (1 + l_tax)) AS sum_charge, 
+            AVG(l_quantity) AS avg_qty, 
+            AVG(l_extendedprice) AS avg_price, 
+            AVG(l_discount) AS avg_disc, 
+            COUNT(*) AS count_order 
+        FROM 
+            lineitem 
+        WHERE 
+            l_shipdate &lt;= DATE_SUB(#{shipDate}, INTERVAL #{intervalDays} DAY)
+        GROUP BY 
+            l_returnflag, 
+            l_linestatus 
+        ORDER BY 
+            l_returnflag, 
+            l_linestatus
+    </select>
+
+    <!-- 最低成本供应商查询 -->
+    <select id="minCostSupplierQuery" resultMap="MinCostSupplierResultMap">
+        SELECT 
+            s_acctbal, 
+            s_name, 
+            n_name, 
+            p_partkey, 
+            p_mfgr, 
+            s_address, 
+            s_phone, 
+            s_comment 
+        FROM 
+            part, 
+            supplier, 
+            partsupp, 
+            nation, 
+            region 
+        WHERE 
+            p_partkey = ps_partkey 
+            AND s_suppkey = ps_suppkey 
+            AND p_size = #{partSize}
+            AND p_type LIKE CONCAT('%', #{partType})
+            AND s_nationkey = n_nationkey 
+            AND n_regionkey = r_regionkey 
+            AND r_name = #{regionName}
+            AND ps_supplycost = ( 
+                SELECT 
+                    MIN(ps_supplycost) 
+                FROM 
+                    partsupp, 
+                    supplier, 
+                    nation, 
+                    region 
+                WHERE 
+                    p_partkey = ps_partkey 
+                    AND s_suppkey = ps_suppkey 
+                    AND s_nationkey = n_nationkey 
+                    AND n_regionkey = r_regionkey 
+                    AND r_name = #{regionName}
+            ) 
+        ORDER BY 
+            s_acctbal DESC, 
+            n_name, 
+            s_name, 
+            p_partkey
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 获取定价汇总报表查询的执行计划 -->
+    <select id="explainPricingSummaryReport" resultType="java.util.Map">
+        EXPLAIN 
+        SELECT 
+            l_returnflag, 
+            l_linestatus, 
+            SUM(l_quantity) AS sum_qty, 
+            SUM(l_extendedprice) AS sum_base_price, 
+            SUM(l_extendedprice * (1 - l_discount)) AS sum_disc_price, 
+            SUM(l_extendedprice * (1 - l_discount) * (1 + l_tax)) AS sum_charge, 
+            AVG(l_quantity) AS avg_qty, 
+            AVG(l_extendedprice) AS avg_price, 
+            AVG(l_discount) AS avg_disc, 
+            COUNT(*) AS count_order 
+        FROM 
+            lineitem 
+        WHERE 
+            l_shipdate &lt;= DATE_SUB(#{shipDate}, INTERVAL #{intervalDays} DAY)
+        GROUP BY 
+            l_returnflag, 
+            l_linestatus 
+        ORDER BY 
+            l_returnflag, 
+            l_linestatus
+    </select>
+
+    <!-- 获取最低成本供应商查询的执行计划 -->
+    <select id="explainMinCostSupplierQuery" resultType="java.util.Map">
+        EXPLAIN 
+        SELECT 
+            s_acctbal, 
+            s_name, 
+            n_name, 
+            p_partkey, 
+            p_mfgr, 
+            s_address, 
+            s_phone, 
+            s_comment 
+        FROM 
+            part, 
+            supplier, 
+            partsupp, 
+            nation, 
+            region 
+        WHERE 
+            p_partkey = ps_partkey 
+            AND s_suppkey = ps_suppkey 
+            AND p_size = #{partSize}
+            AND p_type LIKE CONCAT('%', #{partType})
+            AND s_nationkey = n_nationkey 
+            AND n_regionkey = r_regionkey 
+            AND r_name = #{regionName}
+            AND ps_supplycost = ( 
+                SELECT 
+                    MIN(ps_supplycost) 
+                FROM 
+                    partsupp, 
+                    supplier, 
+                    nation, 
+                    region 
+                WHERE 
+                    p_partkey = ps_partkey 
+                    AND s_suppkey = ps_suppkey 
+                    AND s_nationkey = n_nationkey 
+                    AND n_regionkey = r_regionkey 
+                    AND r_name = #{regionName}
+            ) 
+        ORDER BY 
+            s_acctbal DESC, 
+            n_name, 
+            s_name, 
+            p_partkey
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+</mapper> 

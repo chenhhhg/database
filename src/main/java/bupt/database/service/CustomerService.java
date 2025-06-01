@@ -1,6 +1,8 @@
 package bupt.database.service;
 
 import bupt.database.dto.AuthDTO;
+import bupt.database.dto.CustomerQueryRequest;
+import bupt.database.dto.CustomerQueryResponse;
 import bupt.database.dto.UserCreateDTO;
 import bupt.database.entity.Customer;
 import bupt.database.util.DatabaseConfig;
@@ -34,4 +36,9 @@ public interface CustomerService extends IService<Customer> {
     void updateDbConfig(DatabaseConfig config);
 
     Long getUserCnt();
+    
+    /**
+     * 根据条件查询客户信息
+     */
+    CustomerQueryResponse queryCustomers(CustomerQueryRequest request);
 }
